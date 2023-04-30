@@ -1,0 +1,4 @@
+(class main
+  (method main ()
+    (begin 
+      (print "test"))))
