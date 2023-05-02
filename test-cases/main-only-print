@@ -1,4 +1,4 @@
 (class main
   (method main ()
     (begin 
-      (print "test"))))
+      (print "multiple word string"))))

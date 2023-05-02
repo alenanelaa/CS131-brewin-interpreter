@@ -130,3 +130,6 @@ dmypy.json
 
 # mac stuff *shakes fist*
 .DS_Store
+
+#do not need to push to repo
+test.py
