@@ -1,9 +1,9 @@
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 
-from classDef import classDef, methodDef, objDef
-from fieldDef import field, value
-from statements import statement
+from classes import classDef
+from methods import methodDef
+from fields import field
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_output=True, inp=None, trace_output=False):

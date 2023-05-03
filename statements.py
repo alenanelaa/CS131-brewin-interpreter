@@ -1,27 +1,30 @@
 from intbase import InterpreterBase, ErrorType
-from fieldDef import value, types
+from fields import types
+from values import value
 
 class statement:
+    ops = {'+', '-', '*', '/', '%', '!', '<', '>', '<=', '>=', '==', '!='}
+
     def __init__(self, inter, s):
         self.m_statement = s
         self.interpreter = inter
 
     #may be better to do with if statements (to catch all the arithmetic operators versus method calls)
     def run_statement(self):
-        match self.m_statement[0]:
-            case 'begin':
-                for s in self.m_statement[1:]:
-                    step = statement(self.interpreter,s)
-                    step.run_statement()
-            case 'print':
-                self.handlePrint(self.m_statement[1:])
-            
-            case '+':
-                self.handleExpression()
-            case '-':
-                self.handleExpression()
-            case '*':
-                self.handleExpression()
+        a = self.m_statement[0]
+        if a == self.interpreter.BEGIN_DEF:
+            for s in self.m_statement[1:]:
+                step = statement(self.interpreter,s)
+                step.run_statement()
+        elif a == self.interpreter.PRINT_DEF:
+            self.handlePrint(self.m_statement[1:])
+        elif self.isoperator(a):
+            self.handleExpression()
+        else:
+            self.interpreter.error(ErrorType.SYNTAX_ERROR)
+
+    def isoperator(self, op):
+        return op in statement.ops
 
     #all tokens passed in as strings
     #if there are quotation marks -> indicates string ('"4"' would be the string 4) 
