@@ -16,7 +16,7 @@ class Interpreter(InterpreterBase):
         indicator, tokens = BParser.parse(program)
 
         if not indicator:
-            InterpreterBase.output(self, "Parsing Error")
+            self.output("Parsing Error")
             #FIGURE OUT ANOTHER WAY TO RETURN AN ERROR THIS SEEMS WRONG********
             return SystemError
 
@@ -24,13 +24,6 @@ class Interpreter(InterpreterBase):
         mainclass = self.findClassDef('main')
         obj = mainclass.instantiate_object()
         obj.run_method('main')
-
-        #debugging
-        # for c in self.m_classes:
-        #     InterpreterBase.output(self, c.className)
-        #     for m in c.m_methods:
-        #         InterpreterBase.output(self, m.m_name)
-        #         InterpreterBase.output(self, m.m_statements)
         
     #discover and track all classes
     def trackClasses(self, tokens):
@@ -45,8 +38,8 @@ class Interpreter(InterpreterBase):
                         a.m_methods.append(methodDef(self, item[1],class_def[1]))
                         #gets the method to get its parameters and statments
                         m = a.m_methods[-1]
-                        m.params = item[2]
-                        m.m_statements.append(statement(self, item[3]))
+                        m.setParams(item[2])
+                        m.setStatements(item[3])
                         
                     case 'field': #add feature later
                         a.m_fields.append(field(self, 'test', 0))
@@ -58,6 +51,6 @@ class Interpreter(InterpreterBase):
             if c.className == classname:
                 return c
             
-        InterpreterBase.output(self, f'NAME ERROR: class {classname} not defined')
-        return ErrorType.NAME_ERROR
+        self.output(f'NAME ERROR: class {classname} not defined')
+        self.error(ErrorType.NAME_ERROR)
         

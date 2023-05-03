@@ -37,7 +37,7 @@ class objDef:
                 return m
         
         self.interpreter.output(self, f'NAME ERROR: method {mname} not defined')
-        return ErrorType.NAME_ERROR
+        self.error(ErrorType.NAME_ERROR)
 
 #class for brewin class methods
 
@@ -50,6 +50,14 @@ class methodDef:
         self.m_class = c
         self.params = []
         self.m_statements = []
+
+    #list of parameters passed in
+    def setParams(self, p):
+        self.params.extend(p)
+
+    #list representing statement(s) passed in
+    def setStatements(self, st):
+        self.m_statements.append(statement(self.interpreter, st))
 
     def execute(self):
         for s in self.m_statements:
