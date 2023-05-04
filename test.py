@@ -7,8 +7,9 @@ class BrewinTestCase:
     def __init__(self, input_file, expected_output_file):
         self.input_file = input_file
         self.expected_output_file = expected_output_file
+        self.interpreter = Interpreter()
 
-    def run_test(self, interpreter):
+    def run_test(self):
         with open(self.input_file, 'r') as f:
             input_lines = f.read().splitlines()
 
@@ -19,7 +20,7 @@ class BrewinTestCase:
         output = io.StringIO()
         sys.stdout = output
 
-        interpreter.run(input_lines)
+        self.interpreter.run(input_lines)
         actual_output = output.getvalue()
 
         sys.stdout = sys.__stdout__
@@ -45,12 +46,11 @@ for filename in os.listdir(test_dir):
         expected_output_file = os.path.join(expected_dir, filename.replace(".brewin", ".out"))
         test_cases.append(BrewinTestCase(input_file, expected_output_file))
 
-interpreter = Interpreter()
 num_tests = len(test_cases)
 num_passed = 0
 
 for test_case in test_cases:
-    if test_case.run_test(interpreter):
+    if test_case.run_test():
         num_passed += 1
 
 print(f"{num_passed}/{num_tests} test cases passed")
