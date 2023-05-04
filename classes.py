@@ -1,4 +1,3 @@
-from intbase import InterpreterBase, ErrorType
 from objects import objDef
 
 #class for brewin class definitions

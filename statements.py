@@ -1,4 +1,4 @@
-from intbase import InterpreterBase, ErrorType
+from intbase import ErrorType
 from fields import types
 from values import value
 

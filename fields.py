@@ -1,4 +1,3 @@
-from intbase import InterpreterBase, ErrorType
 from enum import Enum
 
 class types(Enum):
