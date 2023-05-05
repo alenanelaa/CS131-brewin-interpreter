@@ -1,4 +1,5 @@
 from objects import objDef
+from intbase import ErrorType
 
 #class for brewin class definitions
 
@@ -17,3 +18,11 @@ class classDef:
     def instantiate_object(self):
         obj = objDef(self.className, self.interpreter, self.m_methods, self.m_fields)
         return obj
+    
+    def getField(self, fieldname):
+        for f in self.m_fields:
+            if f.m_name == fieldname:
+                return f
+            
+        self.interpreter.output(f'NAME ERROR: field {fieldname} is not defined')
+        self.error(ErrorType.NAME_ERROR)

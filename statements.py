@@ -1,131 +1,54 @@
 from intbase import ErrorType
-from fields import types
-from values import value
+from expressions import expression
 
 class statement:
-    ops = {'+', '-', '*', '/', '%', '!', '<', '>', '<=', '>=', '==', '!='}
+    bops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!='}
+    uops = {'!'}
 
-    def __init__(self, inter, s):
-        self.m_statement = s
+    def __init__(self, inter, c, m, s):
         self.interpreter = inter
+        self.m_class = c
+        self.m_method = m
+        self.m_statement = s
 
-    #may be better to do with if statements (to catch all the arithmetic operators versus method calls)
     def run_statement(self):
         a = self.m_statement[0]
-        if a == self.interpreter.BEGIN_DEF:
-            for s in self.m_statement[1:]:
-                step = statement(self.interpreter,s)
-                step.run_statement()
-        elif a == self.interpreter.PRINT_DEF:
-            self.handlePrint(self.m_statement[1:])
-        elif self.isoperator(a):
-            self.handleExpression()
-        else:
-            self.interpreter.error(ErrorType.SYNTAX_ERROR)
-
-    def isoperator(self, op):
-        return op in statement.ops
-
-    #all tokens passed in as strings
-    #if there are quotation marks -> indicates string ('"4"' would be the string 4) 
-    def getValue(self, token):
-        if token == 'null':
-            val = value(types.NULL, None)
-        elif token == 'true' or token == 'false':
-            val = value(types.BOOL, (token == 'true'))
-        elif token[0] == '"':
-            val = value(types.STRING, token.strip('"'))
-            return val
-        else:
-            val = value(types.INT, int(token))
-        return val
-        
-
-    #ADD TYPE CHECKING
-    def handleExpression(self):
-        match self.m_statement[0]:
-            #arithmetic operators
-            case '+':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                #type checking
-                if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
-                    return value(types.INT, arg1 + arg2)
-                elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
-                    return value(types.STRING, arg1 + arg2)
-                else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
-            case '-':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
-                return value(types.INT, arg1 - arg2)
-            case '*':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
-                return value(types.INT, arg1 * arg2)
-            case '/':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
-                return value(types.INT, arg1 // arg2)
-            case '%':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2]) 
-                #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
-                return value(types.INT, arg1 % arg2)     
-            #boolean operators/comparators 
-            case '!':
-                arg = self.getValue(self.m_statement[1])
-                #type checking
-                return value(types.BOOL, not arg)
-            case '<':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                return value(types.BOOL, arg1 < arg2)
-            case '>':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                return value(types.BOOL, arg1 > arg2)
-            case '<=':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                return value(types.BOOL, arg1 <= arg2)
-            case '>=':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                return value(types.BOOL, arg1 >= arg2)
-            case '==':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                return value(types.BOOL, arg1 == arg2)
-            case '!=':
-                arg1 = self.getValue(self.m_statement[1])
-                arg2 = self.getValue(self.m_statement[2])
-                return value(types.BOOL, arg1 != arg2)
+        match a:
+            case self.interpreter.BEGIN_DEF:
+                    steps = [statement(self.interpreter, self.m_class, self.m_method, line) for line in self.m_statement[1:]]
+                    for s in steps:
+                        s.run_statement()
+            case self.interpreter.CALL_DEF:
+                pass
+            case self.interpreter.IF_DEF:
+                pass
+            case self.interpreter.INPUT_INT_DEF:
+                pass
+            case self.interpreter.INPUT_STRING_DEF:
+                pass
+            case self.interpreter.PRINT_DEF:
+                #list of expression objects to be printed
+                exprs = [expression(e, self.m_class) for e in self.m_statement[1:]]
+                self.handlePrint(exprs)
+            case self.interpreter.RETURN_DEF:
+                pass
+            case self.interpreter.SET_DEF:
+                pass
+            case self.interpreter.WHILE_DEF:
+                pass
             case _:
-                #default case
                 self.interpreter.error(ErrorType.SYNTAX_ERROR)
 
+    def handleInput(self, type):
+        #instantiate input of the method
+        pass
 
     def handlePrint(self, s):
         fprint = ''
 
         for item in s:
-            if isinstance(item, list):
-                val = statement(self.interpreter, item).handleExpression()
-                fprint = fprint + str(val)
-            else:
-                fprint = fprint + str(item).strip('"')
+            val = item.evaluate()
+            fprint = fprint + str(val)
 
         self.interpreter.output(fprint)
     

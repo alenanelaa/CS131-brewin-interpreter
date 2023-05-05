@@ -1,12 +1,4 @@
-from enum import Enum
 
-class types(Enum):
-    NULL = 0
-    BOOL = 1
-    INT = 2
-    STRING = 3
-    #FLOAT = 4
-    #DOUBLE = 5
 
 #class for brewin fields within a class
 class field:
@@ -14,3 +6,18 @@ class field:
         self.interpreter = inter
         self.m_name = name
         self.m_val = val
+
+    def __str__(self):
+        return str(self.m_val)
+
+    def setname(self, name):
+        self.m_name = name
+
+    def setvalue(self, val):
+        self.m_val = val
+
+    def getname(self):
+        return self.m_name
+
+    def getvalue(self):
+        return self.m_val

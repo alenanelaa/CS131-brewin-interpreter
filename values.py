@@ -1,4 +1,14 @@
-from fields import types
+from enum import Enum
+
+class types(Enum):
+    NULL = 0
+    BOOL = 1
+    INT = 2
+    STRING = 3
+    STATEMENT = 4
+    FIELD = 6
+    #FLOAT = 4
+    #DOUBLE = 5
 
 #class for brewin values, keeps track of type and value
 class value:
@@ -6,6 +16,9 @@ class value:
         #self.interpreter = inter #i don't think values will need any of the interpreter class methods
         self.m_typetag = type
         self.m_value = value
+
+    def gettype(self):
+        return self.m_typetag
 
     #for outputting correctly
     def __str__(self):

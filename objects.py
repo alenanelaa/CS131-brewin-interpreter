@@ -7,9 +7,8 @@ class objDef:
         self.m_methods = methods
         self.fields = fields
 
-    def run_method(self, methodname):
-        a = self.findMethod(methodname)
-        a.execute()
+    def run_method(self, method):
+        method.execute()
         
     def findMethod(self, mname):
         for m in self.m_methods:
