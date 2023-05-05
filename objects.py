@@ -14,6 +14,5 @@ class objDef:
         for m in self.m_methods:
             if m.m_name == mname:
                 return m
-        
-        self.interpreter.output(self, f'NAME ERROR: method {mname} not defined')
-        self.error(ErrorType.NAME_ERROR)
+
+        self.error(ErrorType.NAME_ERROR, description=f'method {mname} is not defined')

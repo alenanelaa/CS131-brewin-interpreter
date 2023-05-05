@@ -5,7 +5,8 @@ class expression:
     binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!='}
     unops = {'!'}
 
-    def __init__(self, expr, c):
+    def __init__(self, inter, expr, c):
+        self.interpreter = inter
         self.m_expr = expr
         self.m_class = c
 
@@ -34,6 +35,9 @@ class expression:
         arg1 = self.getValue(self.m_expr[1])
         arg2 = self.getValue(self.m_expr[2])
 
+        #type checking
+        err_msg = f'operator {self.m_expr[0]} applied to incompatible types'
+
         match self.m_expr[0]:
             #arithmetic operators
             case '+':
@@ -43,26 +47,26 @@ class expression:
                 elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
                     return value(types.STRING, arg1 + arg2)
                 else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '-':
                 #type checking
                 if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 - arg2)
             case '*':
                 #type checking
                 if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 * arg2)
             case '/':
                 #type checking
                 if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 // arg2)
             case '%':
                 #type checking
                 if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 % arg2)     
             #boolean operators/comparators
             case '<':
@@ -72,7 +76,7 @@ class expression:
                 elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
                     return value(types.BOOL, arg1 < arg2)
                 else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '>':
                 #type checking
                 if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
@@ -80,7 +84,7 @@ class expression:
                 elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
                     return value(types.BOOL, arg1 > arg2)
                 else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '<=':
                 #type checking
                 if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
@@ -88,19 +92,19 @@ class expression:
                 elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
                     return value(types.BOOL, arg1 <= arg2)
                 else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '>=':
                 if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
                     return value(types.BOOL, arg1 >= arg2)
                 elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
                     return value(types.BOOL, arg1 >= arg2)
                 else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '==':
                 if arg1.gettype() == types.NULL or arg2.gettype() == types.NULL:
                     return value(types.BOOL, arg1 == arg2)
                 elif arg1.gettype() != arg2.gettype():
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
                     return value(types.BOOL, arg1 == arg2)
                 return value(types.BOOL, arg1 == arg2)
@@ -108,18 +112,18 @@ class expression:
                 if arg1.gettype() == types.NULL or arg2.gettype() == types.NULL:
                     return value(types.BOOL, arg1 != arg2)
                 elif arg1.gettype() != arg2.gettype():
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
                     return value(types.BOOL, arg1 != arg2)
             case _:
                 #default case
-                self.interpreter.error(ErrorType.SYNTAX_ERROR)
+                self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'{self.m_expr[0]} is an invalid operator')
 
     def getValue(self, token):
 
         #recursion support
         if isinstance(token, list):
-            val = expression(token, self.m_class).evaluate()
+            val = expression(self.interpreter, token, self.m_class).evaluate()
         elif token == 'null':
             val = value(types.NULL, None)
         elif token == 'true' or token == 'false':

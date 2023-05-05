@@ -55,16 +55,14 @@ class Interpreter(InterpreterBase):
             if c.className == classname:
                 return c
             
-        self.output(f'NAME ERROR: class {classname} not defined')
-        self.error(ErrorType.NAME_ERROR)
+        self.error(ErrorType.NAME_ERROR, description=f'class {classname} is not defined')
 
     def findMethodDef(self, methodname):
         for m in self.m_methods:
             if m.m_name == methodname:
                 return m
         
-        self.output(f'NAME ERROR: method {methodname} not defined')
-        self.error(ErrorType.NAME_ERROR)
+        self.error(ErrorType.NAME_ERROR, description=f'method {methodname} is not defined')
 
     def getValue(self, token):
         if token == 'null':

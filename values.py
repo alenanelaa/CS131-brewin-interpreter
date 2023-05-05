@@ -5,10 +5,6 @@ class types(Enum):
     BOOL = 1
     INT = 2
     STRING = 3
-    STATEMENT = 4
-    FIELD = 6
-    #FLOAT = 4
-    #DOUBLE = 5
 
 #class for brewin values, keeps track of type and value
 class value:

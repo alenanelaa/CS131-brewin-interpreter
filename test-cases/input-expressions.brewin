@@ -1,0 +1,9 @@
+(class main
+    (field x null)
+    (field y null)
+    (method main ()
+        (begin
+            (inputi x)
+            (inputs y)
+            (print (+ x 13))
+            (print (+ y " string")))))

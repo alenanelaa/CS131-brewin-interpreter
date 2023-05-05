@@ -1,5 +1,6 @@
 from intbase import ErrorType
 from expressions import expression
+from values import value, types
 
 class statement:
     bops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!='}
@@ -23,12 +24,12 @@ class statement:
             case self.interpreter.IF_DEF:
                 pass
             case self.interpreter.INPUT_INT_DEF:
-                pass
+                self.handleInput(types.INT)
             case self.interpreter.INPUT_STRING_DEF:
-                pass
+                self.handleInput(types.STRING)
             case self.interpreter.PRINT_DEF:
                 #list of expression objects to be printed
-                exprs = [expression(e, self.m_class) for e in self.m_statement[1:]]
+                exprs = [expression(self.interpreter, e, self.m_class) for e in self.m_statement[1:]]
                 self.handlePrint(exprs)
             case self.interpreter.RETURN_DEF:
                 pass
@@ -40,8 +41,12 @@ class statement:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR)
 
     def handleInput(self, type):
-        #instantiate input of the method
-        pass
+        f = self.m_class.getField(self.m_statement[1])
+        val = self.interpreter.get_input()
+        if type == types.INT:
+            val = int(val)
+
+        f.setvalue(value(type, val))
 
     def handlePrint(self, s):
         fprint = ''

@@ -23,6 +23,5 @@ class classDef:
         for f in self.m_fields:
             if f.m_name == fieldname:
                 return f
-            
-        self.interpreter.output(f'NAME ERROR: field {fieldname} is not defined')
-        self.error(ErrorType.NAME_ERROR)
+
+        self.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
