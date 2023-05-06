@@ -2,7 +2,7 @@ from intbase import ErrorType
 from values import value, types
 
 class expression:
-    binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!='}
+    binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!=', '&', '|'}
     unops = {'!'}
 
     def __init__(self, inter, expr, o, p):
@@ -19,6 +19,8 @@ class expression:
         #constant or field
         if isinstance(self.m_expr, str):
             return self.getValue(self.m_expr)
+        elif self.m_expr[0] == self.interpreter.CALL_DEF:
+            pass
         elif self.m_expr[0] in expression.binops:
             return self.binaryExpression()
         elif self.m_expr[0] in expression.unops:
@@ -120,8 +122,15 @@ class expression:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
                     return value(types.BOOL, arg1 != arg2)
+            case '&':
+                if arg1.gettype() != types.BOOL or arg2.gettype() != types.BOOL:
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
+                return value(types.BOOL, arg1 and arg2)
+            case '|':
+                if arg1.gettype() != types.BOOL or arg2.gettype() != types.BOOL:
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
+                return value(types.BOOL, arg1 or arg2)
             case _:
-                #default case
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'{self.m_expr[0]} is an invalid operator')
 
     def getValue(self, token):

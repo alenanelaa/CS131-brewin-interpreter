@@ -47,6 +47,8 @@ class value:
     def __mod__(self, other):
         return self.m_value % other.m_value
     
+    #boolean
+    
     def __and__(self, other):
         return self.m_value and other.m_value
     
