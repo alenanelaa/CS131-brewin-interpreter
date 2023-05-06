@@ -114,7 +114,6 @@ class expression:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
                     return value(types.BOOL, arg1 == arg2)
-                return value(types.BOOL, arg1 == arg2)
             case '!=':
                 if arg1.gettype() == types.NULL or arg2.gettype() == types.NULL:
                     return value(types.BOOL, arg1 != arg2)
@@ -125,11 +124,11 @@ class expression:
             case '&':
                 if arg1.gettype() != types.BOOL or arg2.gettype() != types.BOOL:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
-                return value(types.BOOL, arg1 and arg2)
+                return value(types.BOOL, arg1.m_value and arg2.m_value)
             case '|':
                 if arg1.gettype() != types.BOOL or arg2.gettype() != types.BOOL:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
-                return value(types.BOOL, arg1 or arg2)
+                return value(types.BOOL, arg1.m_value or arg2.m_value)
             case _:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'{self.m_expr[0]} is an invalid operator')
 

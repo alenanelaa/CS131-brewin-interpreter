@@ -47,14 +47,6 @@ class value:
     def __mod__(self, other):
         return self.m_value % other.m_value
     
-    #boolean
-    
-    def __and__(self, other):
-        return self.m_value and other.m_value
-    
-    def __or__(self, other):
-        return self.m_value or other.m_value
-
     #comparison operators
 
     def __lt__(self, other):
