@@ -23,10 +23,6 @@ class Interpreter(InterpreterBase):
             self.output("Parsing Error")
             #FIGURE OUT ANOTHER WAY TO RETURN AN ERROR THIS SEEMS WRONG********
             return SystemError
-        
-        #DEBUGGING
-        if self.trace:
-            self.output(f'PARSED PROGRAM: {tokens}')
 
         self.trackClasses(tokens)
         mainclass = self.findClassDef('main')

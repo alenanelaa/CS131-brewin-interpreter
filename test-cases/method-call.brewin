@@ -2,6 +2,8 @@
     (method main ()
         (begin
             (call me foo 10 20)   # call foo method in same object
+            (call me foo "two" " strings")
+            (call me foo "string and num" 13)
         )
     )
     (method foo (a b)

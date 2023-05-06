@@ -126,9 +126,6 @@ class expression:
 
     def getValue(self, token):
 
-        if self.interpreter.trace:
-            self.interpreter.output(f'COMPUTE value of {token}')
-
         #recursion support
         if isinstance(token, list):
             val = expression(self.interpreter, token, self.m_obj, self.m_params).evaluate()

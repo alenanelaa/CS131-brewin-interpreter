@@ -13,16 +13,18 @@ class statement:
         self.m_params = p
 
     def run_statement(self):
+        
         a = self.m_statement[0]
         match a:
             case self.interpreter.BEGIN_DEF:
-                    #DEBUGGING
-                    if self.interpreter.trace:
-                        self.interpreter.output('Entering begin block')
+                #DEBUGGING
+                if self.interpreter.trace:
+                    self.interpreter.output('ENTER BEGIN BLOCK')
 
-                    steps = [statement(self.interpreter, line, self.m_obj, self.m_params) for line in self.m_statement[1:]]
-                    for s in steps:
-                        s.run_statement()
+                steps = [statement(self.interpreter, line, self.m_obj, self.m_params) for line in self.m_statement[1:]]
+                for s in steps:
+                    s.run_statement()
+
             case self.interpreter.CALL_DEF:
                     #DEBUGGING
                 if self.interpreter.trace:
@@ -34,24 +36,65 @@ class statement:
                         self.m_obj.run_method(m, self.m_params)
                     case _:
                         pass
+
             case self.interpreter.IF_DEF:
-                pass
+                #DEBUGGING
+                if self.interpreter.trace:
+                    self.interpreter.output(f'IF STATEMENT with condition {self.m_statement[1]}')
+
+                self.handleIf()
+
             case self.interpreter.INPUT_INT_DEF:
                 self.handleInput(types.INT)
+
             case self.interpreter.INPUT_STRING_DEF:
                 self.handleInput(types.STRING)
+
             case self.interpreter.PRINT_DEF:
+                #DEBUGGING
+                if self.interpreter.trace:
+                    self.interpreter.output(f'PRINT expressions {self.m_statement[1:]}')
+
                 #list of expression objects to be printed
                 exprs = [expression(self.interpreter, e, self.m_obj, self.m_params) for e in self.m_statement[1:]]
                 self.handlePrint(exprs)
+
             case self.interpreter.RETURN_DEF:
                 pass
+
             case self.interpreter.SET_DEF:
                 pass
+
             case self.interpreter.WHILE_DEF:
                 pass
+
             case _:
-                self.interpreter.error(ErrorType.SYNTAX_ERROR)
+                self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{self.m_statement[0]}" ')
+
+    def handleIf(self):
+        condition = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params)
+        cond = condition.evaluate()
+
+        if cond.gettype() != types.BOOL:
+            self.interpreter.error(ErrorType.TYPE_ERROR, description=f'Non-boolean if condition')
+
+        if self.interpreter.trace:
+            self.interpreter.output(f'condition evaluated to {cond}')
+
+        if cond.m_value:
+            s = statement(self.interpreter, self.m_statement[2], self.m_obj, self.m_params)
+            s.run_statement()
+        #will only run this if condition evaluates to false and there is a statement to run if false
+        elif len(self.m_statement[2:]) == 2:
+            s = statement(self.interpreter, self.m_statement[3], self.m_obj, self.m_params)
+            s.run_statement()     
+
+    def getParams(self, params):
+        values = [x for x in self.m_statement[3:]]
+        if len(values) != len(params):
+            self.interpreter.error(ErrorType.SYNTAX_ERROR, description="Incorrect number of parameters")
+        
+        self.m_params = {params[i]:values[i] for i in range(len(params))}
 
     def handleInput(self, type):
         f = self.m_obj.getField(self.m_statement[1])
@@ -70,11 +113,6 @@ class statement:
 
         self.interpreter.output(fprint)
 
-    def getParams(self, params):
-        values = [x for x in self.m_statement[3:]]
-        if len(values) != len(params):
-            self.interpreter.error(ErrorType.SYNTAX_ERROR, description="Incorrect number of parameters")
-        
-        self.m_params = {params[i]:values[i] for i in range(len(params))}
+    
         
     
