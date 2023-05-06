@@ -12,7 +12,7 @@ class statement:
         self.m_obj = o
         self.m_params = p
 
-    def run_statement(self):
+    def run_statement(self, method):
         
         a = self.m_statement[0]
         match a:
@@ -23,7 +23,7 @@ class statement:
 
                 steps = [statement(self.interpreter, line, self.m_obj, self.m_params) for line in self.m_statement[1:]]
                 for s in steps:
-                    s.run_statement()
+                    s.run_statement(method)
 
             case self.interpreter.CALL_DEF:
                     #DEBUGGING
@@ -42,7 +42,7 @@ class statement:
                 if self.interpreter.trace:
                     self.interpreter.output(f'IF STATEMENT with condition {self.m_statement[1]}')
 
-                self.handleIf()
+                self.handleIf(method)
 
             case self.interpreter.INPUT_INT_DEF:
                 self.handleInput(types.INT)
@@ -60,7 +60,12 @@ class statement:
                 self.handlePrint(exprs)
 
             case self.interpreter.RETURN_DEF:
-                pass
+                self.interpreter.stackpop()
+                method.stackframe -= 1
+                if len(self.m_statement) == 2:
+                    expr = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params)
+                    return expr.evaluate()
+
 
             case self.interpreter.SET_DEF:
                 pass
@@ -71,7 +76,7 @@ class statement:
             case _:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{self.m_statement[0]}" ')
 
-    def handleIf(self):
+    def handleIf(self, method):
         condition = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params)
         cond = condition.evaluate()
 
@@ -83,11 +88,11 @@ class statement:
 
         if cond.m_value:
             s = statement(self.interpreter, self.m_statement[2], self.m_obj, self.m_params)
-            s.run_statement()
+            s.run_statement(method)
         #will only run this if condition evaluates to false and there is a statement to run if false
         elif len(self.m_statement[2:]) == 2:
             s = statement(self.interpreter, self.m_statement[3], self.m_obj, self.m_params)
-            s.run_statement()     
+            s.run_statement(method)     
 
     def getParams(self, params):
         values = [x for x in self.m_statement[3:]]

@@ -11,7 +11,7 @@ class objDef:
         if self.interpreter.trace:
             self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {params}')
 
-        method.execute(self, params)
+        return method.execute(self, params)
         
     def getMethod(self, mname):
         return self.m_class.findMethodDef(mname)

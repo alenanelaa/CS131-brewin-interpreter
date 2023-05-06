@@ -9,11 +9,35 @@ class methodDef:
         self.m_class = c
         self.params = p
         self.m_statement = top
+        self.stackframe = 0
 
     def findField(self, fieldname):
         return self.m_class.getField(fieldname)
 
     #execute top level statement
     def execute(self, obj, params):
-        s = statement(self.interpreter, self.m_statement, obj, params)
-        s.run_statement()
+        #push to stack
+        if self.m_statement[0] == self.interpreter.BEGIN_DEF:
+            self.interpreter.stackpush(self.m_statement[1:])
+        else:
+            self.interpreter.stackpush([self.m_statement])
+
+        self.stackframe = 1
+
+        while self.stackframe > 0:
+            cur_frame = self.interpreter.stackpop()
+            self.stackframe -= 1
+
+            if not cur_frame:
+                return
+
+            s = cur_frame.pop(0)
+
+            self.interpreter.stackpush(cur_frame)
+            self.stackframe += 1
+            
+            st = statement(self.interpreter, s, obj, params)
+            r = st.run_statement(self)
+
+            if r:
+                return r            

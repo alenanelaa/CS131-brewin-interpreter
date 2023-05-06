@@ -1,0 +1,4 @@
+(class main
+    (method test () (return))
+    (method main ()
+        (call me test)))

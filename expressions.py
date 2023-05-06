@@ -20,7 +20,15 @@ class expression:
         if isinstance(self.m_expr, str):
             return self.getValue(self.m_expr)
         elif self.m_expr[0] == self.interpreter.CALL_DEF:
-            pass
+            if self.interpreter.trace:
+                    self.interpreter.output(f'CALL {self.m_statement[2]} in object {self.m_statement[1]} with args {self.m_statement[3:]}')
+            match self.m_expr[1]:
+                case self.interpreter.ME_DEF:
+                    m = self.m_obj.getMethod(self.m_expr[2])
+                    self.getParams(m.params)
+                    return self.m_obj.run_method(m, self.m_params)
+                case _:
+                    pass
         elif self.m_expr[0] in expression.binops:
             return self.binaryExpression()
         elif self.m_expr[0] in expression.unops:
@@ -153,3 +161,10 @@ class expression:
     
     def getField(self, fieldname):
         return self.m_obj.getField(fieldname)
+    
+    def getParams(self, params):
+        values = [x for x in self.m_expr[3:]]
+        if len(values) != len(params):
+            self.interpreter.error(ErrorType.SYNTAX_ERROR, description="Incorrect number of parameters")
+        
+        self.m_params = {params[i]:values[i] for i in range(len(params))}

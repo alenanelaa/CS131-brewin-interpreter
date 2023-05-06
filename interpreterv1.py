@@ -12,6 +12,7 @@ class Interpreter(InterpreterBase):
         #begin with empty list of class definitions, methods, and objects
         self.m_classes = []
         self.m_objs = []
+        self.callstack = []
         #for debugging
         self.trace = trace_output
 
@@ -66,3 +67,9 @@ class Interpreter(InterpreterBase):
         else:
             val = value(types.INT, int(token))
         return val
+    
+    def stackpush(self, frame):
+        self.callstack.append(frame)
+
+    def stackpop(self):
+        return self.callstack.pop()
