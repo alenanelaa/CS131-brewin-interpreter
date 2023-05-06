@@ -2,8 +2,7 @@
 
 #class for brewin fields within a class
 class field:
-    def __init__(self, inter, name, val):
-        self.interpreter = inter
+    def __init__(self, name, val):
         self.m_name = name
         self.m_val = val
 

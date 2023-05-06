@@ -1,0 +1,10 @@
+(class main
+    (method main ()
+        (begin
+            (call me foo 10 20)   # call foo method in same object
+        )
+    )
+    (method foo (a b)
+        (print a b)
+    )
+)

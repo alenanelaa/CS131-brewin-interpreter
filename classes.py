@@ -11,12 +11,10 @@ class classDef:
         self.m_methods = []
         #empty list for class fields (variables) - may change data structure later
         self.m_fields = []
-        #how many instantiated objects in the program
-        self.m_objs = 0 #prob don't need this lmfao
 
     #instantiating class object
     def instantiate_object(self):
-        obj = objDef(self.className, self.interpreter, self.m_methods, self.m_fields)
+        obj = objDef(self.interpreter, self, self.m_fields)
         return obj
     
     def getField(self, fieldname):
@@ -25,3 +23,10 @@ class classDef:
                 return f
 
         self.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
+
+    def findMethodDef(self, methodname):
+        for m in self.m_methods:
+            if m.m_name == methodname:
+                return m
+        
+        self.error(ErrorType.NAME_ERROR, description=f'method {methodname} is not defined')

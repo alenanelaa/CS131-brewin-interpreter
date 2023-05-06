@@ -5,12 +5,17 @@ class expression:
     binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!='}
     unops = {'!'}
 
-    def __init__(self, inter, expr, c):
+    def __init__(self, inter, expr, o, p):
         self.interpreter = inter
         self.m_expr = expr
-        self.m_class = c
+        self.m_obj = o
+        self.m_params = p
 
     def evaluate(self):
+        #DEBUGGING
+        if self.interpreter.trace:
+            self.interpreter.output(f'EVALUATE expression {self.m_expr}')
+
         #constant or field
         if isinstance(self.m_expr, str):
             return self.getValue(self.m_expr)
@@ -121,15 +126,20 @@ class expression:
 
     def getValue(self, token):
 
+        if self.interpreter.trace:
+            self.interpreter.output(f'COMPUTE value of {token}')
+
         #recursion support
         if isinstance(token, list):
-            val = expression(self.interpreter, token, self.m_class).evaluate()
+            val = expression(self.interpreter, token, self.m_obj, self.m_params).evaluate()
         elif token == 'null':
             val = value(types.NULL, None)
         elif token == 'true' or token == 'false':
             val = value(types.BOOL, (token == 'true'))
         elif token[0] == '"' and token[-1] == '"':
             val = value(types.STRING, token.strip('"'))
+        elif token in self.m_params:
+            val = self.getValue(self.m_params[token])
         elif any(not c.isdigit() for c in token):
             val = self.getField(token).getvalue()
         else:
@@ -137,4 +147,4 @@ class expression:
         return val
     
     def getField(self, fieldname):
-        return self.m_class.getField(fieldname)
+        return self.m_obj.getField(fieldname)
