@@ -6,12 +6,12 @@ class objDef:
         self.m_class = classDef
         self.m_fields = fields
 
-    def run_method(self, method, params):
+    def run_method(self, method, params, fields):
         #DEBUGGING
         if self.interpreter.trace:
             self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {params}')
 
-        return method.execute(self, params)
+        return method.execute(self, params, fields)
         
     def getMethod(self, mname):
         return self.m_class.findMethodDef(mname)

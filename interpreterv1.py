@@ -30,23 +30,34 @@ class Interpreter(InterpreterBase):
         obj = mainclass.instantiate_object()
         self.m_objs.append(obj)
         mainmethod = obj.getMethod('main')
-        obj.run_method(mainmethod, {})
+        obj.run_method(mainmethod, {}, obj.m_fields)
         
     #discover and track all classes
     def trackClasses(self, tokens):
         #top level of parsed program must be class
         for class_def in tokens:
+            if self.classDefined(class_def[1]):
+                self.error(ErrorType.TYPE_ERROR, description=f'Duplicate class name {class_def[1]}')
             a = classDef(self, class_def[1])
             self.m_classes.append(a)
             #classes have either field or method handlers
             for item in class_def[2:]:
                 match item[0]:
                     case 'method':
+                        if a.hasMethod(item[1]):
+                            self.error(ErrorType.NAME_ERROR, description=f'duplicate method {item[1]}')
                         a.m_methods.append(methodDef(self, item[1], a, item[2], item[3]))
                         
                     case 'field':
+                        if a.hasField(item[1]):
+                            self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[1]}')
                         a.m_fields.append(field(item[1], self.getValue(item[2])))
 
+    def classDefined(self, classname):
+        for c in self.m_classes:
+            if c.className == classname:
+                return True
+        return False
     
     #find a specific class definition
     def findClassDef(self, classname):

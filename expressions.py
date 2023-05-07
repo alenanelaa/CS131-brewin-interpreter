@@ -5,11 +5,12 @@ class expression:
     binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!=', '&', '|'}
     unops = {'!'}
 
-    def __init__(self, inter, expr, o, p):
+    def __init__(self, inter, expr, o, p, f):
         self.interpreter = inter
         self.m_expr = expr
         self.m_obj = o
         self.m_params = p
+        self.m_fields = f
 
     def evaluate(self):
         #DEBUGGING
@@ -26,7 +27,7 @@ class expression:
                 case self.interpreter.ME_DEF:
                     m = self.m_obj.getMethod(self.m_expr[2])
                     self.getParams(m.params)
-                    return self.m_obj.run_method(m, self.m_params)
+                    return self.m_obj.run_method(m, self.m_params, self.m_fields)
                 case _:
                     pass
         elif self.m_expr[0] in expression.binops:
@@ -144,23 +145,34 @@ class expression:
 
         #recursion support
         if isinstance(token, list):
-            val = expression(self.interpreter, token, self.m_obj, self.m_params).evaluate()
+            val = expression(self.interpreter, token, self.m_obj, self.m_params, self.m_fields).evaluate()
         elif token == 'null':
             val = value(types.NULL, None)
         elif token == 'true' or token == 'false':
             val = value(types.BOOL, (token == 'true'))
         elif token[0] == '"' and token[-1] == '"':
             val = value(types.STRING, token.strip('"'))
-        elif token in self.m_params:
+        elif token in self.m_params: #checks param names first in case there is shadowing of field names
             val = self.getValue(self.m_params[token])
-        elif any(not c.isdigit() for c in token):
+        elif self.isfieldname(token):
             val = self.getField(token).getvalue()
-        else:
+        elif all(c.isdigit() for c in token):
             val = value(types.INT, int(token))
+        else:
+            self.interpreter.error(ErrorType.SYNTAX_ERROR)
         return val
     
+    def isfieldname(self, fieldname):
+        for f in self.m_fields:
+            if f.m_name == fieldname:
+                return True
+        return False
+
+    #only gets called if fieldname is a valid, defined field
     def getField(self, fieldname):
-        return self.m_obj.getField(fieldname)
+        for f in self.m_fields:
+            if f.m_name == fieldname:
+                return f
     
     def getParams(self, params):
         values = [x for x in self.m_expr[3:]]

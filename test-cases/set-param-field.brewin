@@ -1,0 +1,9 @@
+(class main
+    (field a "something")
+    (method foo (b) 
+        (begin
+            (print b)
+            (set b a)
+            (print b)))
+    (method main ()
+        (call me foo "not something")))

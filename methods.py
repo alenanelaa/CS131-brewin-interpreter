@@ -15,7 +15,7 @@ class methodDef:
         return self.m_class.getField(fieldname)
 
     #execute top level statement
-    def execute(self, obj, params):
+    def execute(self, obj, params, fields):
         #push to stack
         if self.m_statement[0] == self.interpreter.BEGIN_DEF:
             self.interpreter.stackpush(self.m_statement[1:])
@@ -37,7 +37,7 @@ class methodDef:
             self.stackframe += 1
             
             st = statement(self.interpreter, s, obj, params)
-            r = st.run_statement(self)
+            r = st.run_statement(self, fields)
 
             if r:
                 return r            
