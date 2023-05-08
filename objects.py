@@ -26,3 +26,6 @@ class objDef:
                 return f
 
         self.interpreter.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
+
+    def getfields(self):
+        return self.m_fields

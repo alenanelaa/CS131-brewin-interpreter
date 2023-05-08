@@ -41,7 +41,15 @@ class statement:
                         self.getParams(m.params, fields)
                         self.m_obj.run_method(m, self.m_params, fields)
                     case _:
-                        pass
+                        val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields).evaluate()
+                        if val.gettype() == types.NULL:
+                            self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
+                        elif val.gettype() != types.OBJECT:
+                            self.interpreter.error(ErrorType.FAULT_ERROR, description=f'invalid object pointer {self.m_statement[1]}')
+                        obj = val.m_value
+                        m = obj.getMethod(self.m_statement[2])
+                        self.getParams(m.params, fields)
+                        obj.run_method(m, self.m_params, obj.getfields())
 
             case self.interpreter.IF_DEF:
                 #DEBUGGING

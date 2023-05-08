@@ -30,6 +30,10 @@ class expression:
                     r = self.m_obj.run_method(m, self.m_params, self.m_fields)
                 case _:
                     pass
+        elif self.m_expr[0] == self.interpreter.NEW_DEF:
+            cdef = self.interpreter.findClassDef(self.m_expr[1])
+            obj = cdef.instantiate_object()
+            return value(types.OBJECT, obj)
         elif self.m_expr[0] in expression.binops:
             r =  self.binaryExpression()
         elif self.m_expr[0] in expression.unops:
@@ -40,12 +44,11 @@ class expression:
         return r
 
 
-
     def unaryExpression(self):
         arg1 = self.getValue(self.m_expr[1])
         match self.m_expr[0]:
             case '!':
-                if not isinstance(arg1.m_value, bool):
+                if arg1.gettype() != types.BOOL:
                     self.interpreter.error(ErrorType.TYPE_ERROR)
                 return value(types.BOOL, not arg1)
             case _:
@@ -62,61 +65,61 @@ class expression:
             #arithmetic operators
             case '+':
                 #type checking
-                if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
+                if arg1.gettype() == types.INT and arg2.gettype() == types.INT:
                     return value(types.INT, arg1 + arg2)
-                elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
+                elif arg1.gettype() == types.STRING and arg2.gettype() == types.STRING:
                     return value(types.STRING, arg1 + arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '-':
                 #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
+                if arg1.gettype() != types.INT or arg2.gettype() != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 - arg2)
             case '*':
                 #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
+                if arg1.gettype() != types.INT or arg2.gettype() != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 * arg2)
             case '/':
                 #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
+                if arg1.gettype() != types.INT or arg2.gettype() != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 // arg2)
             case '%':
                 #type checking
-                if not isinstance(arg1.m_value, int) or not isinstance(arg2.m_value, int):
+                if arg1.gettype() != types.INT or arg2.gettype() != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 % arg2)     
             #boolean operators/comparators
             case '<':
                 #type checking
-                if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
+                if arg1.gettype() == types.INT and arg2.gettype() == types.INT:
                     return value(types.BOOL, arg1 < arg2)
-                elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
+                elif arg1.gettype() == types.STRING and arg2.gettype() == types.STRING:
                     return value(types.BOOL, arg1 < arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '>':
                 #type checking
-                if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
+                if arg1.gettype() == types.INT and arg2.gettype() == types.INT:
                     return value(types.BOOL, arg1 > arg2)
-                elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
+                elif arg1.gettype() == types.STRING and arg2.gettype() == types.STRING:
                     return value(types.BOOL, arg1 > arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '<=':
                 #type checking
-                if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
+                if arg1.gettype() == types.INT and arg2.gettype() == types.INT:
                     return value(types.BOOL, arg1 <= arg2)
-                elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
+                elif arg1.gettype() == types.STRING and arg2.gettype() == types.STRING:
                     return value(types.BOOL, arg1 <= arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '>=':
-                if isinstance(arg1.m_value, int) and isinstance(arg2.m_value, int):
+                if arg1.gettype() == types.INT and arg2.gettype() == types.INT:
                     return value(types.BOOL, arg1 >= arg2)
-                elif isinstance(arg1.m_value, str) and isinstance(arg2.m_value, str):
+                elif arg1.gettype() == types.STRING and arg2.gettype() == types.STRING:
                     return value(types.BOOL, arg1 >= arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)

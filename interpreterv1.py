@@ -65,7 +65,7 @@ class Interpreter(InterpreterBase):
             if c.className == classname:
                 return c
             
-        self.error(ErrorType.NAME_ERROR, description=f'class {classname} is not defined')
+        self.error(ErrorType.TYPE_ERROR, description=f'class {classname} is not defined')
 
     def getValue(self, token):
         if token == 'null':
