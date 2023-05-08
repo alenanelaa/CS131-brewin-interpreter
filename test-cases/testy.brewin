@@ -1,0 +1,7 @@
+(class main
+    (method main ()
+        (call (new dog) bark "woof")))
+
+(class dog
+    (method bark (x)
+        (print x)))

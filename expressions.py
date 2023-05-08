@@ -46,6 +46,7 @@ class expression:
 
     def unaryExpression(self):
         arg1 = self.getValue(self.m_expr[1])
+
         match self.m_expr[0]:
             case '!':
                 if arg1.gettype() != types.BOOL:
@@ -170,7 +171,7 @@ class expression:
         elif all(c.isdigit() for c in token):
             val = value(types.INT, int(token))
         else:
-            self.interpreter.error(ErrorType.SYNTAX_ERROR)
+            self.interpreter.error(ErrorType.TYPE_ERROR)
         return val
     
     def isfieldname(self, fieldname):

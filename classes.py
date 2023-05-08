@@ -28,7 +28,7 @@ class classDef:
             if f.m_name == fieldname:
                 return f
 
-        self.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
+        self.interpreter.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
 
     def hasMethod(self, methodname):
         for m in self.m_methods:
@@ -41,4 +41,4 @@ class classDef:
             if m.m_name == methodname:
                 return m
         
-        self.error(ErrorType.NAME_ERROR, description=f'method {methodname} is not defined')
+        self.interpreter.error(ErrorType.NAME_ERROR, description=f'method {methodname} is not defined')
