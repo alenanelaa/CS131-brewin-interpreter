@@ -11,7 +11,6 @@ class Interpreter(InterpreterBase):
         super().__init__(console_output, inp)   # call InterpreterBase’s constructor
         #begin with empty list of class definitions, methods, and objects
         self.m_classes = []
-        self.m_objs = []
         self.callstack = []
         #for debugging
         self.trace = trace_output
@@ -28,7 +27,6 @@ class Interpreter(InterpreterBase):
         self.trackClasses(tokens)
         mainclass = self.findClassDef('main')
         obj = mainclass.instantiate_object()
-        self.m_objs.append(obj)
         mainmethod = obj.getMethod('main')
         obj.run_method(mainmethod, {}, obj.m_fields)
         

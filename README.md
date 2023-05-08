@@ -1,4 +1,4 @@
-# CS 131 Spring 2023: Project Starter
+# CS 131 Spring 2023: Brewin Interpreter Version 1
 
 Hey there! This is a template repository that contains the necessary boilerplate for [CS 131](https://ucla-cs-131.github.io/spring-23/)'s quarter-long project: making an interpreter. The project specs are as follows:
 
