@@ -47,7 +47,7 @@ class expression:
         elif self.m_expr[0] in expression.unops:
             r =  self.unaryExpression()
         else:
-            self.interpreter.error(ErrorType.TYPE_ERROR)
+            self.interpreter.error(ErrorType.NAME_ERROR)
 
         return r
 
@@ -179,7 +179,7 @@ class expression:
         elif all(c.isdigit() for c in token):
             val = value(types.INT, int(token))
         else:
-            self.interpreter.error(ErrorType.FAULT_ERROR)
+            self.interpreter.error(ErrorType.NAME_ERROR)
         return val
     
     def isfieldname(self, fieldname):
