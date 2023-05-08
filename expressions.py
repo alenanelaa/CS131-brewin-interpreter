@@ -29,7 +29,15 @@ class expression:
                     self.getParams(m.params)
                     r = self.m_obj.run_method(m, self.m_params, self.m_fields)
                 case _:
-                    pass
+                    val = expression(self.interpreter, self.m_expr[1], self.m_obj, self.m_params, self.m_fields).evaluate()
+                    if val.gettype() == types.NULL:
+                        self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
+                    elif val.gettype() != types.OBJECT:
+                        self.interpreter.error(ErrorType.FAULT_ERROR, description = f'invalid object pointer {self.m_expr[1]}')
+                    obj = val.m_value
+                    m = obj.getMethod(self.m_expr[2])
+                    self.getParams(m.params)
+                    r = obj.run_method(m, self.m_params, obj.getfields())
         elif self.m_expr[0] == self.interpreter.NEW_DEF:
             cdef = self.interpreter.findClassDef(self.m_expr[1])
             obj = cdef.instantiate_object()
@@ -39,7 +47,7 @@ class expression:
         elif self.m_expr[0] in expression.unops:
             r =  self.unaryExpression()
         else:
-            pass #error?
+            self.interpreter.error(ErrorType.TYPE_ERROR)
 
         return r
 
