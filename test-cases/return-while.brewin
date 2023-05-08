@@ -1,0 +1,6 @@
+(class main
+  (field x 3)
+  (method main () 
+      (while (> x 0) 
+        (if (== x 1) (return)
+          (begin (print "x is " x) (set x (- x 1)))))))

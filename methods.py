@@ -28,6 +28,9 @@ class methodDef:
             cur_frame = self.interpreter.stackpop()
             self.stackframe -= 1
 
+            # if self.interpreter.trace:
+            #     self.interpreter.output(f'current_frame: {cur_frame}')
+
             if not cur_frame:
                 return
 
@@ -39,5 +42,6 @@ class methodDef:
             st = statement(self.interpreter, s, obj, params)
             r = st.run_statement(self, fields)
 
-            if r:
-                return r            
+        if self.interpreter.trace:
+            self.interpreter.output(f'method returned {r}')
+        return r         

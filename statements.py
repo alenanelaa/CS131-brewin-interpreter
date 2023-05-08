@@ -13,6 +13,9 @@ class statement:
         self.m_params = p
 
     def run_statement(self, method, fields):
+
+        # if self.interpreter.trace:
+        #     self.interpreter.output(f'RUNNING STATEMENT {self.m_statement}')
         
         a = self.m_statement[0]
         match a:
@@ -21,14 +24,12 @@ class statement:
                 if self.interpreter.trace:
                     self.interpreter.output('ENTER BEGIN BLOCK')
 
-                #MAY HAVE TO CHANGE TO ACCOUNT FOR NESTED BEGIN BLOCKS
-
                 steps = [statement(self.interpreter, line, self.m_obj, self.m_params) for line in self.m_statement[1:]]
                 for s in steps:
                     r = s.run_statement(method, fields)
-                    #if r == something to specify that the statement was a return value, don't run anything else in the begin block
 
-                #MAY HAVE TO CHANGE TO ACCOUNT FOR NESTED BEGIN BLOCKS
+                    if r: #if statement returns anything besides None, that means it was a return statement
+                        break
 
             case self.interpreter.CALL_DEF:
                     #DEBUGGING
@@ -37,7 +38,7 @@ class statement:
                 match self.m_statement[1]:
                     case self.interpreter.ME_DEF:
                         m = self.m_obj.getMethod(self.m_statement[2])
-                        self.getParams(m.params)
+                        self.getParams(m.params, fields)
                         self.m_obj.run_method(m, self.m_params, fields)
                     case _:
                         pass
@@ -47,7 +48,7 @@ class statement:
                 if self.interpreter.trace:
                     self.interpreter.output(f'IF STATEMENT with condition {self.m_statement[1]}')
 
-                self.handleIf(method, fields)
+                return self.handleIf(method, fields)
 
             case self.interpreter.INPUT_INT_DEF:
                 self.handleInput(types.INT)
@@ -67,11 +68,18 @@ class statement:
             case self.interpreter.RETURN_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output("RETURN from method called")
+
                 self.interpreter.stackpop()
                 method.stackframe -= 1
                 if len(self.m_statement) == 2:
                     expr = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields)
                     return expr.evaluate()
+                else:
+                    return types.RETURN
+                
+                # if self.interpreter.trace:
+                #     self.interpreter.output(f'expression evaluation returned {r}')
+                # return r
 
             case self.interpreter.SET_DEF:
                 if self.interpreter.trace:
@@ -79,7 +87,7 @@ class statement:
                 #check if in params first in case of shadowing
                 fieldnames = [f.m_name for f in fields]
                 if self.m_statement[1] in self.m_params:
-                    self.m_params[self.m_statement[1]] = self.m_statement[2]
+                    self.m_params[self.m_statement[1]] = expression(self.interpreter, self.m_statement[2], self.m_obj, self.m_params, fields).evaluate()
                 elif self.m_statement[1] in fieldnames:
                     for i in range(len(fields)):
                         if fieldnames[i] == fields[i].m_name:
@@ -92,31 +100,51 @@ class statement:
 
 
             case self.interpreter.WHILE_DEF:
-                pass
+                if self.interpreter.trace:
+                    self.interpreter.output(f'WHILE LOOP with condition {self.m_statement[1]}')
+
+                return self.handleWhile(method, fields)
 
             case _:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{self.m_statement[0]}" ')
 
+    def handleWhile(self, method, fields):
+        cond = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields).evaluate()
+        if cond.gettype() != types.BOOL:
+            self.interpreter.error(ErrorType.TYPE_ERROR, description=f'Non-boolean while condition')
+
+        while cond.m_value:
+            if self.interpreter.trace:
+                self.interpreter.output(f'condition {self.m_statement[1]} evaluated to {cond}')
+
+            s = statement(self.interpreter, self.m_statement[2], self.m_obj, self.m_params)
+            r = s.run_statement(method, fields)
+            
+            #break out of while loop
+            if r:
+                return r
+
+            cond = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields).evaluate()
+    
     def handleIf(self, method, fields):
-        condition = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields)
-        cond = condition.evaluate()
+        cond = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields).evaluate()
 
         if cond.gettype() != types.BOOL:
             self.interpreter.error(ErrorType.TYPE_ERROR, description=f'Non-boolean if condition')
 
         if self.interpreter.trace:
-            self.interpreter.output(f'condition evaluated to {cond}')
+            self.interpreter.output(f'condition {self.m_statement[1]} evaluated to {cond}')
 
         if cond.m_value:
             s = statement(self.interpreter, self.m_statement[2], self.m_obj, self.m_params)
-            s.run_statement(method, fields)
+            return s.run_statement(method, fields)
         #will only run this if condition evaluates to false and there is a statement to run if false
         elif len(self.m_statement[2:]) == 2:
             s = statement(self.interpreter, self.m_statement[3], self.m_obj, self.m_params)
-            s.run_statement(method, fields)     
+            return s.run_statement(method, fields)     
 
-    def getParams(self, params):
-        values = [x for x in self.m_statement[3:]]
+    def getParams(self, params, fields):
+        values = [expression(self.interpreter, x, self.m_obj, self.m_params, fields).evaluate() for x in self.m_statement[3:]]
         if len(values) != len(params):
             self.interpreter.error(ErrorType.TYPE_ERROR, description="Incorrect number of parameters")
         
@@ -138,7 +166,3 @@ class statement:
             fprint = fprint + str(val)
 
         self.interpreter.output(fprint)
-
-    
-        
-    

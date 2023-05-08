@@ -6,6 +6,7 @@ class types(Enum):
     INT = 2
     STRING = 3
     OBJECT = 4
+    RETURN = 5 #special type for returning from a method without returning a value
 
 #class for brewin values, keeps track of type and value
 class value:

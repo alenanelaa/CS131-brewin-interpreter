@@ -19,23 +19,27 @@ class expression:
 
         #constant or field
         if isinstance(self.m_expr, str):
-            return self.getValue(self.m_expr)
+            r =  self.getValue(self.m_expr)
         elif self.m_expr[0] == self.interpreter.CALL_DEF:
             if self.interpreter.trace:
-                    self.interpreter.output(f'CALL {self.m_statement[2]} in object {self.m_statement[1]} with args {self.m_statement[3:]}')
+                    self.interpreter.output(f'CALL {self.m_expr[2]} in object {self.m_expr[1]} with args {self.m_expr[3:]}')
             match self.m_expr[1]:
                 case self.interpreter.ME_DEF:
                     m = self.m_obj.getMethod(self.m_expr[2])
                     self.getParams(m.params)
-                    return self.m_obj.run_method(m, self.m_params, self.m_fields)
+                    r = self.m_obj.run_method(m, self.m_params, self.m_fields)
                 case _:
                     pass
         elif self.m_expr[0] in expression.binops:
-            return self.binaryExpression()
+            r =  self.binaryExpression()
         elif self.m_expr[0] in expression.unops:
-            return self.unaryExpression()
+            r =  self.unaryExpression()
         else:
-            pass
+            pass #error?
+
+        return r
+
+
 
     def unaryExpression(self):
         arg1 = self.getValue(self.m_expr[1])
@@ -143,8 +147,12 @@ class expression:
 
     def getValue(self, token):
 
+        #edge case for params because they are already mapped to values
+        if isinstance(token, value):
+            return token
+
         #recursion support
-        if isinstance(token, list):
+        elif isinstance(token, list):
             val = expression(self.interpreter, token, self.m_obj, self.m_params, self.m_fields).evaluate()
         elif token == 'null':
             val = value(types.NULL, None)
@@ -153,7 +161,7 @@ class expression:
         elif token[0] == '"' and token[-1] == '"':
             val = value(types.STRING, token.strip('"'))
         elif token in self.m_params: #checks param names first in case there is shadowing of field names
-            val = self.getValue(self.m_params[token])
+            val = self.m_params[token]
         elif self.isfieldname(token):
             val = self.getField(token).getvalue()
         elif all(c.isdigit() for c in token):
@@ -175,7 +183,7 @@ class expression:
                 return f
     
     def getParams(self, params):
-        values = [x for x in self.m_expr[3:]]
+        values = [expression(self.interpreter, x, self.m_obj, self.m_params, self.m_fields).evaluate() for x in self.m_expr[3:]]
         if len(values) != len(params):
             self.interpreter.error(ErrorType.SYNTAX_ERROR, description="Incorrect number of parameters")
         

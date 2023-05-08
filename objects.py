@@ -9,9 +9,13 @@ class objDef:
     def run_method(self, method, params, fields):
         #DEBUGGING
         if self.interpreter.trace:
-            self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {params}')
+            p = [str(key) + ' : ' + str(params[key]) for key in params]
+            self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {p}')
 
-        return method.execute(self, params, fields)
+        r = method.execute(self, params, fields)
+        # if self.interpreter.trace:
+        #     self.interpreter.output(f'method returned {r}')
+        return r
         
     def getMethod(self, mname):
         return self.m_class.findMethodDef(mname)

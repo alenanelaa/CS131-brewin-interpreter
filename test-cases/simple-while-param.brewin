@@ -1,0 +1,8 @@
+(class main 
+    (method countdown (num)
+        (while (> num 0)
+            (begin 
+                (print "number is " num)
+                (set num (- num 1)))))
+    (method main ()
+        (call me countdown 5)))
