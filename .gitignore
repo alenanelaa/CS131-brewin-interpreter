@@ -133,4 +133,6 @@ dmypy.json
 
 #custom
 getparsed.py
-custom-test.py
+tracing.py
+results.json
+tracing.py

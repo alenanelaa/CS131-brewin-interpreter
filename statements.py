@@ -13,9 +13,6 @@ class statement:
         self.m_params = p
 
     def run_statement(self, method, fields):
-
-        # if self.interpreter.trace:
-        #     self.interpreter.output(f'RUNNING STATEMENT {self.m_statement}')
         
         a = self.m_statement[0]
         match a:
@@ -84,10 +81,6 @@ class statement:
                     return expr.evaluate()
                 else:
                     return types.RETURN
-                
-                # if self.interpreter.trace:
-                #     self.interpreter.output(f'expression evaluation returned {r}')
-                # return r
 
             case self.interpreter.SET_DEF:
                 if self.interpreter.trace:

@@ -7,9 +7,7 @@ class classDef:
     def __init__(self, inter, name):
         self.interpreter = inter
         self.className = name
-        #empty list for methods - may change data structure later
         self.m_methods = []
-        #empty list for class fields (variables) - may change data structure later
         self.m_fields = []
 
     #instantiating class object
