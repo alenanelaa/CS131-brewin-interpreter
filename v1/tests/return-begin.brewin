@@ -1,7 +1,0 @@
-(class main
-    (method test () (return))
-    (method main ()
-     (begin
-        (print "something")
-        (call me test)
-        (print "another thing"))))

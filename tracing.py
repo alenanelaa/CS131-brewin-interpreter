@@ -1,4 +1,4 @@
-from interpreterv1 import Interpreter
+from interpreterv2 import Interpreter
 import sys
 
 class BrewinTestCase:

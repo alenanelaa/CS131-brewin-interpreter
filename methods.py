@@ -1,7 +1,7 @@
 from statements import statement
 
 class methodDef:
-    def __init__(self, inter, name, c, p, top):
+    def __init__(self, inter, name, c, p, top, r):
         self.interpreter = inter
         #name of the method
         self.m_name = name
@@ -9,6 +9,7 @@ class methodDef:
         self.m_class = c
         self.params = p
         self.m_statement = top
+        self.default_return = r
         self.stackframe = 0
 
     def findField(self, fieldname):

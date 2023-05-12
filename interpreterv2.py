@@ -12,6 +12,8 @@ class Interpreter(InterpreterBase):
         #begin with empty list of class definitions, methods, and objects
         self.m_classes = []
         self.callstack = []
+        #add class objects as needed during initialization
+        self.types = {'int':types.INT, 'string':types.STRING, 'null':types.NULL, 'bool':types.BOOL}
         #for debugging
         self.trace = trace_output
 
@@ -38,18 +40,19 @@ class Interpreter(InterpreterBase):
                 self.error(ErrorType.TYPE_ERROR, description=f'Duplicate class name {class_def[1]}')
             a = classDef(self, class_def[1])
             self.m_classes.append(a)
+            self.types[class_def[1]] = a #add object type (class type) to the map of possible variable types
             #classes have either field or method handlers
             for item in class_def[2:]:
                 match item[0]:
                     case 'method':
-                        if a.hasMethod(item[1]):
+                        if a.hasMethod(item[2]):
                             self.error(ErrorType.NAME_ERROR, description=f'duplicate method {item[1]}')
-                        a.m_methods.append(methodDef(self, item[1], a, item[2], item[3]))
+                        a.m_methods.append(methodDef(self, item[1], a, item[2], item[3], self.types[item[1]]))
                         
                     case 'field':
                         if a.hasField(item[1]):
                             self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[1]}')
-                        a.m_fields.append(field(item[1], self.getValue(item[2])))
+                        a.m_fields.append(field(item[2], self.types[item[1]], self.getValue(item[3])))
 
     def classDefined(self, classname):
         for c in self.m_classes:

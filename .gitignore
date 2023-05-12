@@ -135,4 +135,5 @@ dmypy.json
 getparsed.py
 tracing.py
 results.json
-tracing.py
+tester.py
+harness.py

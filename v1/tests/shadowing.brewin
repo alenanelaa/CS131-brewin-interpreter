@@ -1,7 +1,0 @@
-(class main
-    (field a 0)
-    (method shadow (a)
-        (print a))
-    (method main ()
-        (call me shadow "test"))
-)

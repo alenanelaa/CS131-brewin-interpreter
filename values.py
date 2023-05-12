@@ -12,15 +12,15 @@ class types(Enum):
 class value:
     def __init__(self, type, value):
         #self.interpreter = inter #i don't think values will need any of the interpreter class methods
-        self.m_typetag = type
+        self.m_type = type
         self.m_value = value
 
     def gettype(self):
-        return self.m_typetag
+        return self.m_type
 
     #for outputting correctly
     def __str__(self):
-        if self.m_typetag == types.BOOL:
+        if self.m_type == types.BOOL:
             if self.m_value:
                 return 'true'
             else:

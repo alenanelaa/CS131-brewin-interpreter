@@ -1,6 +1,0 @@
-(class main 
-  (method main ()
-    (begin
-      (print "this should print")
-      (return)
-      (print "this shouldn't print"))))

@@ -1,9 +1,8 @@
-
-
 #class for brewin fields within a class
 class field:
-    def __init__(self, name, val):
+    def __init__(self, name, t, val):
         self.m_name = name
+        self.type = t
         self.m_val = val
 
     def __str__(self):

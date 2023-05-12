@@ -1,4 +1,0 @@
-(class main
-  (method main ()
-    (begin 
-      (print "testing" " printing" " multiple" " things " 1 2 3 4 5))))
