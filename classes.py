@@ -5,8 +5,7 @@ from intbase import ErrorType
 
 class classDef:
     def __init__(self, inter, name):
-        self.interpreter = inter
-        self.className = name
+        self.interpreter, self.className = inter, name
         self.m_methods = []
         self.m_fields = []
 

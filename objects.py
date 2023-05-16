@@ -2,9 +2,7 @@ from intbase import ErrorType
 
 class objDef:
     def __init__(self, inter, classDef, fields):
-        self.interpreter = inter
-        self.m_class = classDef
-        self.m_fields = fields
+        self.interpreter, self.m_class, self.m_fields = inter, classDef, fields
 
     def run_method(self, method, params, fields):
         #DEBUGGING

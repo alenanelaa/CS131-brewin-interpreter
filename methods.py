@@ -1,15 +1,13 @@
+from intbase import ErrorType
 from statements import statement
+from values import value, types
 
 class methodDef:
-    def __init__(self, inter, name, c, p, top, r):
-        self.interpreter = inter
-        #name of the method
-        self.m_name = name
-        #class that it belongs to
-        self.m_class = c
-        self.params = p
-        self.m_statement = top
-        self.default_return = r
+    def __init__(self, i, n, c, p, top, r):
+        self.interpreter, self.m_name, self.m_class, self.params, self.m_statement = i, n, c, p, top
+
+        dict = {'int':value(types.INT, 0), 'bool':value(types.BOOL, False), 'void':value(types.VOID, None)}
+        self.default_return = dict[r]
         self.stackframe = 0
 
     def findField(self, fieldname):
@@ -45,4 +43,11 @@ class methodDef:
 
         if self.interpreter.trace:
             self.interpreter.output(f'method returned {r}')
+
+        if not r:
+            return self.default_return
+        
+        if r.gettype() != self.default_return.gettype():
+            self.interpreter.error(ErrorType.TYPE_ERROR)
+        
         return r         

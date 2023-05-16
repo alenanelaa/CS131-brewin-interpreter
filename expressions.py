@@ -6,11 +6,7 @@ class expression:
     unops = {'!'}
 
     def __init__(self, inter, expr, o, p, f):
-        self.interpreter = inter
-        self.m_expr = expr
-        self.m_obj = o
-        self.m_params = p
-        self.m_fields = f
+        self.interpreter, self.m_expr, self.m_obj, self.m_params, self.m_fields = inter, expr, o, p, f
 
     def evaluate(self):
         #DEBUGGING
@@ -30,7 +26,7 @@ class expression:
                     r = self.m_obj.run_method(m, self.m_params, self.m_fields)
                 case _:
                     val = expression(self.interpreter, self.m_expr[1], self.m_obj, self.m_params, self.m_fields).evaluate()
-                    if val.gettype() == types.NULL:
+                    if val.gettype() == types.VOID:
                         self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
                     elif val.gettype() != types.OBJECT:
                         self.interpreter.error(ErrorType.FAULT_ERROR, description = f'invalid object pointer {self.m_expr[1]}')
@@ -41,7 +37,7 @@ class expression:
         elif self.m_expr[0] == self.interpreter.NEW_DEF:
             cdef = self.interpreter.findClassDef(self.m_expr[1])
             obj = cdef.instantiate_object()
-            return value(types.OBJECT, obj)
+            return value(cdef, obj)
         elif self.m_expr[0] in expression.binops:
             r =  self.binaryExpression()
         elif self.m_expr[0] in expression.unops:
@@ -133,14 +129,14 @@ class expression:
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '==':
-                if arg1.gettype() == types.NULL or arg2.gettype() == types.NULL:
+                if arg1.gettype() == types.VOID or arg2.gettype() == types.VOID:
                     return value(types.BOOL, arg1 == arg2)
                 elif arg1.gettype() != arg2.gettype():
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
                     return value(types.BOOL, arg1 == arg2)
             case '!=':
-                if arg1.gettype() == types.NULL or arg2.gettype() == types.NULL:
+                if arg1.gettype() == types.VOID or arg2.gettype() == types.VOID:
                     return value(types.BOOL, arg1 != arg2)
                 elif arg1.gettype() != arg2.gettype():
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
@@ -167,7 +163,7 @@ class expression:
         elif isinstance(token, list):
             val = expression(self.interpreter, token, self.m_obj, self.m_params, self.m_fields).evaluate()
         elif token == 'null':
-            val = value(types.NULL, None)
+            val = value(types.VOID, None)
         elif token == 'true' or token == 'false':
             val = value(types.BOOL, (token == 'true'))
         elif token[0] == '"' and token[-1] == '"':
@@ -195,8 +191,18 @@ class expression:
                 return f
     
     def getParams(self, params):
+        if self.interpreter.trace:
+            self.interpreter.output(f"GETTING PARAMETERS {params}")
+
         values = [expression(self.interpreter, x, self.m_obj, self.m_params, self.m_fields).evaluate() for x in self.m_expr[3:]]
         if len(values) != len(params):
-            self.interpreter.error(ErrorType.SYNTAX_ERROR, description="Incorrect number of parameters")
+            self.interpreter.error(ErrorType.TYPE_ERROR, description="Incorrect number of parameters")
+
+        pdict = {}
+
+        for i in range(len(params)):
+            if self.interpreter.types[params[i][0]] != values[i].gettype():
+                self.interpreter.error(ErrorType.TYPE_ERROR)
+            pdict[params[i][1]] = values[i]       
         
-        self.m_params = {params[i]:values[i] for i in range(len(params))}
+        self.m_params = pdict

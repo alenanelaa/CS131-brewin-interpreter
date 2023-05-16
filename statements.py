@@ -7,10 +7,7 @@ class statement:
     uops = {'!'}
 
     def __init__(self, inter, s, o, p):
-        self.interpreter = inter
-        self.m_statement = s
-        self.m_obj = o
-        self.m_params = p
+        self.interpreter, self.m_statement, self.m_obj, self.m_params = inter, s, o, p
 
     def run_statement(self, method, fields):
         
@@ -39,7 +36,7 @@ class statement:
                         self.m_obj.run_method(m, self.m_params, fields)
                     case _:
                         val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields).evaluate()
-                        if val.gettype() == types.NULL:
+                        if val.gettype() == types.VOID:
                             self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
                         elif val.gettype() != types.OBJECT:
                             self.interpreter.error(ErrorType.FAULT_ERROR, description=f'invalid object pointer {self.m_statement[1]}')
@@ -88,14 +85,21 @@ class statement:
                 #check if in params first in case of shadowing
                 fieldnames = [f.m_name for f in fields]
                 if self.m_statement[1] in self.m_params:
-                    self.m_params[self.m_statement[1]] = expression(self.interpreter, self.m_statement[2], self.m_obj, self.m_params, fields).evaluate()
+                    val = expression(self.interpreter, self.m_statement[2], self.m_obj, self.m_params, fields).evaluate()
+                    if self.m_params[self.m_statement[1]].gettype() == val.gettype():
+                        self.m_params[self.m_statement[1]] = val
+                    else:
+                        self.interpreter.error(ErrorType.TYPE_ERROR)
                 elif self.m_statement[1] in fieldnames:
                     for i in range(len(fields)):
                         if fieldnames[i] == fields[i].m_name:
                             field = fields[i]
                             break
                     val = expression(self.interpreter, self.m_statement[2], self.m_obj, self.m_params, fields).evaluate()
-                    field.setvalue(val)
+                    if field.gettype() == val.gettype():
+                        field.setvalue(val)
+                    else:
+                        self.interpreter.error(ErrorType.TYPE_ERROR)
                 else:
                     self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {self.m_statement[1]}')
 
@@ -145,11 +149,21 @@ class statement:
             return s.run_statement(method, fields)     
 
     def getParams(self, params, fields):
+        if self.interpreter.trace:
+            self.interpreter.output(f"GETTING PARAMETERS {params}")
+          
         values = [expression(self.interpreter, x, self.m_obj, self.m_params, fields).evaluate() for x in self.m_statement[3:]]
         if len(values) != len(params):
             self.interpreter.error(ErrorType.TYPE_ERROR, description="Incorrect number of parameters")
+
+        pdict = {}
+
+        for i in range(len(params)):
+            if self.interpreter.types[params[i][0]] != values[i].gettype():
+                self.interpreter.error(ErrorType.TYPE_ERROR)
+            pdict[params[i][1]] = values[i]       
         
-        self.m_params = {params[i]:values[i] for i in range(len(params))}
+        self.m_params = pdict
 
     def handleInput(self, type):
         f = self.m_obj.getField(self.m_statement[1])

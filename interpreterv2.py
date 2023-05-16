@@ -12,8 +12,8 @@ class Interpreter(InterpreterBase):
         #begin with empty list of class definitions, methods, and objects
         self.m_classes = []
         self.callstack = []
-        #add class objects as needed during initialization
-        self.types = {'int':types.INT, 'string':types.STRING, 'null':types.NULL, 'bool':types.BOOL}
+        #add class types as needed during initialization
+        self.types = {'int':types.INT, 'string':types.STRING, 'null':types.VOID, 'bool':types.BOOL}
         #for debugging
         self.trace = trace_output
 
@@ -47,12 +47,12 @@ class Interpreter(InterpreterBase):
                     case 'method':
                         if a.hasMethod(item[2]):
                             self.error(ErrorType.NAME_ERROR, description=f'duplicate method {item[1]}')
-                        a.m_methods.append(methodDef(self, item[1], a, item[2], item[3], self.types[item[1]]))
+                        a.m_methods.append(methodDef(self, item[2], a, item[3], item[4], item[1]))
                         
                     case 'field':
-                        if a.hasField(item[1]):
-                            self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[1]}')
-                        a.m_fields.append(field(item[2], self.types[item[1]], self.getValue(item[3])))
+                        if a.hasField(item[2]):
+                            self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[2]}')
+                        a.m_fields.append(field(self, item[2], self.types[item[1]], item[3]))
 
     def classDefined(self, classname):
         for c in self.m_classes:
@@ -67,18 +67,6 @@ class Interpreter(InterpreterBase):
                 return c
             
         self.error(ErrorType.TYPE_ERROR, description=f'class {classname} is not defined')
-
-    def getValue(self, token):
-        if token == 'null':
-            val = value(types.NULL, None)
-        elif token == 'true' or token == 'false':
-            val = value(types.BOOL, (token == 'true'))
-        elif token[0] == '"' and token[-1] == '"':
-            val = value(types.STRING, token.strip('"'))
-            return val
-        else:
-            val = value(types.INT, int(token))
-        return val
     
     def stackpush(self, frame):
         self.callstack.append(frame)

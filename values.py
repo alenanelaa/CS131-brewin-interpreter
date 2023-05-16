@@ -1,7 +1,7 @@
 from enum import Enum
 
 class types(Enum):
-    NULL = 0
+    VOID = 0
     BOOL = 1
     INT = 2
     STRING = 3
@@ -11,9 +11,7 @@ class types(Enum):
 #class for brewin values, keeps track of type and value
 class value:
     def __init__(self, type, value):
-        #self.interpreter = inter #i don't think values will need any of the interpreter class methods
-        self.m_type = type
-        self.m_value = value
+        self.m_type, self.m_value = type, value
 
     def gettype(self):
         return self.m_type
