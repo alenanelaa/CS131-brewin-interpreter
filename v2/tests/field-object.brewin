@@ -1,0 +1,16 @@
+(class dog
+  (method void bark ((int num)) 
+  (while (> num 0) 
+    (begin (print "woof") (set num (- num 1)))
+    )
+  )
+)
+(class main
+ (field dog d null)
+ (method void main ()
+   (begin
+     (set d (new dog))
+     (call d bark 3)
+   )
+ )
+)

@@ -52,7 +52,7 @@ class Interpreter(InterpreterBase):
                     case 'field':
                         if a.hasField(item[2]):
                             self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[2]}')
-                        a.m_fields.append(field(self, item[2], self.types[item[1]], item[3]))
+                        a.m_fields.append(field(self, item[2], item[1], item[3]))
 
     def classDefined(self, classname):
         for c in self.m_classes:

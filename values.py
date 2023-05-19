@@ -5,15 +5,15 @@ class types(Enum):
     BOOL = 1
     INT = 2
     STRING = 3
-    OBJECT = 4
-    RETURN = 5 #special type for returning from a method without returning a value
+    # OBJECT = 4
 
 #class for brewin values, keeps track of type and value
 class value:
     def __init__(self, type, value):
         self.m_type, self.m_value = type, value
 
-    def gettype(self):
+    @property
+    def type(self):
         return self.m_type
 
     #for outputting correctly

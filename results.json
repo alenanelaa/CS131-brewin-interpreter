@@ -1,7 +1,61 @@
 {
     "tests": [
         {
+            "name": "Correctness | field-object",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | more-methods",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | nested-let",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | simple-let",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
             "name": "Correctness | static-type",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_compare_null",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_return_default1",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Incorrectness | invalid-field",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Incorrectness | invalid-return",
             "score": 1,
             "max_score": 1,
             "visibility": "visible"

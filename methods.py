@@ -3,17 +3,19 @@ from statements import statement
 from values import value, types
 
 class methodDef:
+    defaults = {'int':value(types.INT, 0), 'string': value(types.STRING, ''), 'bool':value(types.BOOL, False), 'void':value(types.VOID, None)}
+
     def __init__(self, i, n, c, p, top, r):
         self.interpreter, self.m_name, self.m_class, self.params, self.m_statement = i, n, c, p, top
-
-        dict = {'int':value(types.INT, 0), 'bool':value(types.BOOL, False), 'void':value(types.VOID, None)}
-        self.default_return = dict[r]
+        self.default_return = methodDef.defaults[r]
         self.stackframe = 0
+        self.localvar = [] #stack of dictionaries for let statements
 
     def findField(self, fieldname):
         return self.m_class.getField(fieldname)
 
     #execute top level statement
+    #pass in localvar stats into run_statement function?
     def execute(self, obj, params, fields):
         #push to stack
         if self.m_statement[0] == self.interpreter.BEGIN_DEF:
@@ -38,8 +40,8 @@ class methodDef:
             self.interpreter.stackpush(cur_frame)
             self.stackframe += 1
             
-            st = statement(self.interpreter, s, obj, params)
-            r = st.run_statement(self, fields)
+            st = statement(self.interpreter, s, obj, params, self.default_return)
+            r = st.run_statement(self, fields, self.localvar)
 
         if self.interpreter.trace:
             self.interpreter.output(f'method returned {r}')
@@ -47,7 +49,7 @@ class methodDef:
         if not r:
             return self.default_return
         
-        if r.gettype() != self.default_return.gettype():
+        if r.type != self.default_return.type:
             self.interpreter.error(ErrorType.TYPE_ERROR)
         
         return r         
