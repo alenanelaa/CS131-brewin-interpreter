@@ -7,7 +7,7 @@ class field:
         self.interpreter, self.m_name = i, n
 
         if self.interpreter.trace:
-            self.interpreter.output(f'FIELD initialized of type {t} with value {val}')
+            self.interpreter.output(f'FIELD {n} initialized of type {t} with value {val}')
 
         #type stored as class definition for non-primitive objects
         self.m_type = self.interpreter.types[t]

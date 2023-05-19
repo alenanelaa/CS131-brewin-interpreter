@@ -1,0 +1,17 @@
+(class dog
+    (field string name "spots")
+    (method void bark ()
+        (print "woof")
+    )
+)
+(class main 
+    (field dog d null)
+    (field dog c null)
+    (method void main ()
+        (begin
+          (set d (new dog))
+          (set c (new dog))
+          (print (== c d))
+        )
+    )
+)

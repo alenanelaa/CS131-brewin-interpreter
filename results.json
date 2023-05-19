@@ -1,6 +1,18 @@
 {
     "tests": [
         {
+            "name": "Correctness | compare-int",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | compare-objref",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
             "name": "Correctness | field-object",
             "score": 1,
             "max_score": 1,
@@ -19,6 +31,12 @@
             "visibility": "visible"
         },
         {
+            "name": "Correctness | set-local",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
             "name": "Correctness | simple-let",
             "score": 1,
             "max_score": 1,
@@ -26,6 +44,12 @@
         },
         {
             "name": "Correctness | static-type",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test-assign-null",
             "score": 1,
             "max_score": 1,
             "visibility": "visible"

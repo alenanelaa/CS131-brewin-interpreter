@@ -1,6 +1,7 @@
 from intbase import ErrorType
 from expressions import expression
 from values import value, types
+from classes import classDef
 
 class statement:
 
@@ -36,8 +37,8 @@ class statement:
                         val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
                         if val.type == types.VOID: #might have to change to if not val.type (None)
                             self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
-                        # elif val.m_type != types.OBJECT:
-                        #     self.interpreter.error(ErrorType.FAULT_ERROR, description=f'invalid object pointer {self.m_statement[1]}')
+                        elif not isinstance(val.type, classDef):
+                             self.interpreter.error(ErrorType.FAULT_ERROR, description=f'invalid object pointer {self.m_statement[1]}')
                         obj = val.m_value
                         m = obj.getMethod(self.m_statement[2])
                         self.getParams(m.params, fields, vlocal)
@@ -117,18 +118,13 @@ class statement:
         val = expression(self.interpreter, self.m_statement[2], self.m_obj, self.m_params, fields, vlocal).evaluate()
         fieldnames = [f.m_name for f in fields]
 
-        if any(self.m_statement[1] in vlocal[i] for i in range(len(vlocal))):
+        if any([self.m_statement[1] in vlocal[i] for i in range(len(vlocal))]):
             #set the local variable
             for i in range(len(vlocal)-1, -1, -1):
-                if self.m_statement[1] in vlocal[i] and vlocal[i][self.m_statement[1]].type == val.type: #reconsider this for inherited types
-                    vlocal[i][self.m_statement[1]] = val
-                else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                if self.m_statement[1] in vlocal[i]:
+                    self.setvar(self.m_statement[1], vlocal[i], val)
         elif self.m_statement[1] in self.m_params:
-            if self.m_params[self.m_statement[1]].type == val.type:
-                self.m_params[self.m_statement[1]] = val
-            else:
-                self.interpreter.error(ErrorType.TYPE_ERROR)
+            self.setvar(self.m_statement[1], self.m_params, val)
         elif self.m_statement[1] in fieldnames:
             for i in range(len(fields)):
                 if fieldnames[i] == fields[i].m_name:
@@ -136,10 +132,30 @@ class statement:
                     break
             if field.type == val.type:
                 field.setvalue(val)
+            elif isinstance(field.type, classDef):
+                if val.type == types.VOID: #null
+                    field.setvalue(val)
+                #elif for inheritance
+                else:
+                    self.interpreter.error(ErrorType.TYPE_ERROR)
             else:
                 self.interpreter.error(ErrorType.TYPE_ERROR)
         else:
             self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {self.m_statement[1]}')
+    def setvar(self, var, dict, value):
+        if self.interpreter.trace:
+            self.interpreter.output(var)
+
+        if dict[var].type == value.type:
+            dict[var] = value
+        elif isinstance(dict[var].type, classDef): 
+            if value.type == types.VOID: #null
+                dict[var] = value
+            #elif for inheritance
+            else:
+                self.interpreter.error(ErrorType.TYPE_ERROR)
+        else:
+            self.interpreter.error(ErrorType.TYPE_ERROR)
 
     def handleWhile(self, method, fields, vlocal):
         cond = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
@@ -188,7 +204,13 @@ class statement:
         if self.interpreter.trace:
             self.interpreter.output(f'local variable scope with vars: {[names[i] +":"+ str(vals[i]) for i in range(len(vars))]}')
 
-        return {names[i]:vals[i] for i in range(len(vars))}
+        d = {}
+        for i in range(len(vars)):
+            if names[i] in d:
+                self.interpreter.error(ErrorType.NAME_ERROR)
+            d[names[i]] = vals[i]
+
+        return d
 
     def getParams(self, params, fields, vlocal):
         if self.interpreter.trace:
