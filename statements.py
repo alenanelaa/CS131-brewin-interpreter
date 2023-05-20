@@ -83,8 +83,15 @@ class statement:
             case self.interpreter.SET_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'SET variable {self.m_statement[1]} to {self.m_statement[2]}')
+
                 #check if in locals then params then fields for shadowing
                 self.handleSet(fields, vlocal)
+
+                if self.interpreter.trace:
+                    t = [str(key) + ':' + str(self.m_params[key].m_value) for key in self.m_params]
+                    self.interpreter.output(f'params: {t}' )
+                    p = [[str(key) + ':' + str(vlocal[i][key].m_value) for key in vlocal[i]] for i in range(len(vlocal))]
+                    self.interpreter.output(f'local vars: {p}')
 
             case self.interpreter.LET_DEF:
                 if self.interpreter.trace:
@@ -101,7 +108,7 @@ class statement:
 
                     if r: #if statement returns anything besides None, that means it was a return statement
                         if self.interpreter.trace:
-                            self.interpreter.output('breaking out of LET scope')
+                            self.interpreter.output(f'EXIT LET scope {self.m_statement[1]}')
                         break
 
                 #pop the let scope off local variable stack when done
@@ -142,6 +149,7 @@ class statement:
                 field.setvalue(val)
             elif isinstance(field.type, classDef):
                 if val.type == types.VOID: #null
+                    val.type = field.type
                     field.setvalue(val)
                 #elif for inheritance
                 else:
@@ -150,11 +158,19 @@ class statement:
                 self.interpreter.error(ErrorType.TYPE_ERROR)
         else:
             self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {self.m_statement[1]}')
+
+
+        
     def setvar(self, var, dict, value):
+        # if self.interpreter.trace:
+        #     self.interpreter.output(dict[var].type)
+        #     self.interpreter.output(value.type)
+
         if dict[var].type == value.type:
             dict[var] = value
         elif isinstance(dict[var].type, classDef): 
             if value.type == types.VOID: #null
+                value.type = dict[var].type
                 dict[var] = value
             #elif for inheritance
             else:
@@ -198,22 +214,25 @@ class statement:
             return s.run_statement(method, fields, vlocal)     
 
     def handleLet(self, vars, fields, vlocal):
-        types = [self.interpreter.types[vars[i][0]] for i in range(len(vars))]
+        t = [self.interpreter.types[vars[i][0]] for i in range(len(vars))]
         names = [vars[i][1] for i in range(len(vars))]
         vals = [expression(self.interpreter, vars[i][2], self.m_obj, self.m_params, fields, vlocal).evaluate() for i in range(len(vars))]
 
+        d = {}
+
         for i in range(len(vars)):
-            if types[i] != vals[i].type:
+            if names[i] in d:
+                self.interpreter.error(ErrorType.NAME_ERROR) #duplicate let variables
+            elif t[i] == vals[i].type:
+                d[names[i]] = vals[i]
+            elif isinstance(t[i], classDef) and vals[i].type == types.VOID: #null
+                vals[i].type = t[i]
+                d[names[i]] = vals[i]
+            else:
                 self.interpreter.error(ErrorType.TYPE_ERROR, description=f"invalid type/type mismatch with local variable {names[i]}")
 
         if self.interpreter.trace:
             self.interpreter.output(f'local variable scope with vars: {[names[i] +":"+ str(vals[i]) for i in range(len(vars))]}')
-
-        d = {}
-        for i in range(len(vars)):
-            if names[i] in d:
-                self.interpreter.error(ErrorType.NAME_ERROR)
-            d[names[i]] = vals[i]
 
         return d
 

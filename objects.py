@@ -10,8 +10,7 @@ class objDef:
             p = [str(key) + ':' + str(params[key]) for key in params]
             self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {p}')
 
-        r = method.execute(self, params, fields)
-        return r
+        return method.execute(self, params, fields)
         
     def getMethod(self, mname):
         return self.m_class.findMethodDef(mname)

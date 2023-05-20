@@ -1,5 +1,6 @@
 from objects import objDef
 from intbase import ErrorType
+import copy
 
 #class for brewin class definitions
 
@@ -11,7 +12,8 @@ class classDef:
 
     #instantiating class object
     def instantiate_object(self):
-        obj = objDef(self.interpreter, self, self.m_fields)
+        f = [d.newfield() for d in self.m_fields]
+        obj = objDef(self.interpreter, self, f)
         return obj
     
     def hasField(self, fieldname):

@@ -16,6 +16,9 @@ class value:
     def type(self):
         return self.m_type
 
+    @type.setter
+    def type(self, t):
+        self.m_type = t
     #for outputting correctly
     def __str__(self):
         if self.m_type == types.BOOL:

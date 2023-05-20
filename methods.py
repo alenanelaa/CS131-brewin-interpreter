@@ -11,7 +11,7 @@ class methodDef:
         if r in methodDef.defaults:
             self.default_return = methodDef.defaults[r]
         elif isinstance(self.interpreter.types[r], classDef): #default return null if object not returned in method
-            self.default_return = value(types.VOID, None)
+            self.default_return = value(self.interpreter.types[r], None)
         else:
             self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid method return type {r}')
         self.stackframe = 0
@@ -23,8 +23,6 @@ class methodDef:
     #execute top level statement
     #pass in localvar stats into run_statement function?
     def execute(self, obj, params, fields):
-        if self.interpreter.trace:
-            self.interpreter.output('EXECUTE method')
 
         #push to stack
         if self.m_statement[0] == self.interpreter.BEGIN_DEF:
@@ -38,8 +36,8 @@ class methodDef:
             cur_frame = self.interpreter.stackpop()
             self.stackframe -= 1
 
-            if self.interpreter.trace:
-                self.interpreter.output(f'current_frame: {cur_frame}')
+            # if self.interpreter.trace:
+            #     self.interpreter.output(f'current_frame: {cur_frame}')
 
             if not cur_frame:
                 break

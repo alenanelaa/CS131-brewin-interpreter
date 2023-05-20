@@ -3,7 +3,7 @@ from bparser import BParser
 
 from classes import classDef
 from methods import methodDef
-from fields import field
+from fields import field, fieldDef
 from values import types
 
 class Interpreter(InterpreterBase):
@@ -52,7 +52,7 @@ class Interpreter(InterpreterBase):
                     case 'field':
                         if a.hasField(item[2]):
                             self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[2]}')
-                        a.m_fields.append(field(self, item[2], item[1], item[3]))
+                        a.m_fields.append(fieldDef(self, item[2], item[1], item[3]))
 
     def classDefined(self, classname):
         for c in self.m_classes:
