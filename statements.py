@@ -73,8 +73,10 @@ class statement:
                 self.interpreter.stackpop()
                 method.stackframe -= 1
                 if len(self.m_statement) == 2:
-                    expr = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal)
-                    return expr.evaluate()
+                    val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
+                    if self.interpreter.trace:
+                        self.interpreter.output(f'returning {val}')
+                    return val
                 else:
                     return self.rval
 
@@ -98,10 +100,13 @@ class statement:
                     r = s.run_statement(method, fields, vlocal)
 
                     if r: #if statement returns anything besides None, that means it was a return statement
+                        if self.interpreter.trace:
+                            self.interpreter.output('breaking out of LET scope')
                         break
 
                 #pop the let scope off local variable stack when done
                 vlocal.pop()
+                return r
                 
 
             case self.interpreter.WHILE_DEF:
@@ -119,15 +124,18 @@ class statement:
         fieldnames = [f.m_name for f in fields]
 
         if any([self.m_statement[1] in vlocal[i] for i in range(len(vlocal))]):
+            if self.interpreter.trace:
+                self.interpreter.output(f'setting local variable {self.m_statement[1]}')
             #set the local variable
             for i in range(len(vlocal)-1, -1, -1):
                 if self.m_statement[1] in vlocal[i]:
                     self.setvar(self.m_statement[1], vlocal[i], val)
+                    break
         elif self.m_statement[1] in self.m_params:
             self.setvar(self.m_statement[1], self.m_params, val)
         elif self.m_statement[1] in fieldnames:
             for i in range(len(fields)):
-                if fieldnames[i] == fields[i].m_name:
+                if self.m_statement[1] == fieldnames[i]:
                     field = fields[i]
                     break
             if field.type == val.type:
@@ -143,9 +151,6 @@ class statement:
         else:
             self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {self.m_statement[1]}')
     def setvar(self, var, dict, value):
-        if self.interpreter.trace:
-            self.interpreter.output(var)
-
         if dict[var].type == value.type:
             dict[var] = value
         elif isinstance(dict[var].type, classDef): 

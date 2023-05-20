@@ -1,5 +1,6 @@
 from intbase import ErrorType
 from values import value, types
+from classes import classDef
 
 class expression:
     binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!=', '&', '|'}
@@ -25,10 +26,10 @@ class expression:
                     self.getParams(m.params)
                     r = self.m_obj.run_method(m, self.m_params, self.m_fields)
                 case _:
-                    val = expression(self.interpreter, self.m_expr[1], self.m_obj, self.m_params, self.m_fields).evaluate()
+                    val = expression(self.interpreter, self.m_expr[1], self.m_obj, self.m_params, self.m_fields, self.local).evaluate()
                     if val.type == types.VOID:
                         self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
-                    elif val.type != types.OBJECT:
+                    elif not isinstance(val.type, classDef):
                         self.interpreter.error(ErrorType.FAULT_ERROR, description = f'invalid object pointer {self.m_expr[1]}')
                     obj = val.m_value
                     m = obj.getMethod(self.m_expr[2])
@@ -162,7 +163,7 @@ class expression:
 
         #recursion support
         elif isinstance(token, list):
-            val = expression(self.interpreter, token, self.m_obj, self.m_params, self.m_fields).evaluate()
+            val = expression(self.interpreter, token, self.m_obj, self.m_params, self.m_fields, self.local).evaluate()
         elif token == 'null':
             val = value(types.VOID, None)
         elif token == 'true' or token == 'false':

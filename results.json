@@ -55,13 +55,97 @@
             "visibility": "visible"
         },
         {
+            "name": "Correctness | test_compare_int",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
             "name": "Correctness | test_compare_null",
             "score": 1,
             "max_score": 1,
             "visibility": "visible"
         },
         {
+            "name": "Correctness | test_instantiate_and_call1",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_instantiate_and_call2",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_instantiate_and_return1",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_instantiate_and_return2",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_knock_knock",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let copy",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
             "name": "Correctness | test_let",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let1",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let2",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let3",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let4",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let5",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let_mayhem",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_let_shadowing",
             "score": 1,
             "max_score": 1,
             "visibility": "visible"

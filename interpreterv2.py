@@ -4,7 +4,7 @@ from bparser import BParser
 from classes import classDef
 from methods import methodDef
 from fields import field
-from values import value, types
+from values import types
 
 class Interpreter(InterpreterBase):
     def __init__(self, console_output=True, inp=None, trace_output=False):
