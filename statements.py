@@ -64,13 +64,13 @@ class statement:
                 v = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
                 if v.type != types.INT:
                     self.interpreter.output(ErrorType.TYPE_ERROR)
-                self.handleInput(types.INT)
+                self.handleInput(types.INT, v, vlocal)
 
             case self.interpreter.INPUT_STRING_DEF:
                 v = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
                 if v.type != types.STRING:
                     self.interpreter.output(ErrorType.TYPE_ERROR)
-                self.handleInput(types.STRING)
+                self.handleInput(types.STRING, v, vlocal)
 
             case self.interpreter.PRINT_DEF:
                 #DEBUGGING
@@ -103,14 +103,7 @@ class statement:
                 if self.interpreter.trace:
                     self.interpreter.output(f'SET variable {self.m_statement[1]} to {self.m_statement[2]}')
 
-                #check if in locals then params then fields for shadowing
                 self.handleSet(fields, vlocal)
-
-                # if self.interpreter.trace:
-                #     t = [str(key) + ':' + str(self.m_params[key].m_value) for key in self.m_params]
-                #     self.interpreter.output(f'params: {t}' )
-                #     p = [[str(key) + ':' + str(vlocal[i][key].m_value) for key in vlocal[i]] for i in range(len(vlocal))]
-                #     self.interpreter.output(f'local vars: {p}')
 
             case self.interpreter.LET_DEF:
                 if self.interpreter.trace:
@@ -199,6 +192,7 @@ class statement:
             self.interpreter.error(ErrorType.TYPE_ERROR)
 
     def typematch(self, var, val):
+
         if var == val:
             return True
         elif isinstance(var, classDef) and isinstance(val, classDef):
@@ -280,13 +274,23 @@ class statement:
         pdict = {params[i][1]:self.m_params[i] for i in range(len(self.m_params))}
         self.m_params = pdict
 
-    def handleInput(self, type):
-        f = self.m_obj.getField(self.m_statement[1])
-        val = self.interpreter.get_input()
-        if type == types.INT:
-            val = int(val)
+    def handleInput(self, type, val, vlocal):
 
-        f.setvalue(value(type, val))
+        fieldnames = [f.m_name for f in self.m_obj.getfields()]
+        
+        if any([self.m_statement[1] in vlocal[i] for i in range(len(vlocal))]):
+            for i in range(len(vlocal)-1, -1, -1):
+                if self.m_statement[1] in vlocal[i]:
+                    self.setvar(self.m_statement[1], vlocal[i], val)
+                    break
+        elif self.m_statement[1] in self.m_params:
+            self.setvar(self.m_statement[1], self.m_params, val)
+        elif self.m_statement[1] in fieldnames:
+            f = self.m_obj.getField(self.m_statement[1])
+            val = self.interpreter.get_input()
+            if type == types.INT:
+                val = int(val)
+            f.setvalue(value(type, val))
 
     def handlePrint(self, s):
         fprint = ''

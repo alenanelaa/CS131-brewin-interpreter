@@ -692,7 +692,7 @@
         },
         {
             "name": "Correctness | test_return_default2",
-            "score": 0,
+            "score": 1,
             "max_score": 1,
             "visibility": "visible"
         },

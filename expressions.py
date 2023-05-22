@@ -173,7 +173,7 @@ class expression:
             val = self.m_params[token]
         elif self.isfieldname(token):
             val = self.getField(token).getvalue()
-        elif all(c.isdigit() for c in token):
+        elif all(c.isdigit() for c in token) or (token[0] == '-' and all(c.isdigit() for c in token[1:])):
             val = value(types.INT, int(token))
         else:
             self.interpreter.error(ErrorType.NAME_ERROR)
