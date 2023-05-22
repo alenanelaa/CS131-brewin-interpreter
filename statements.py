@@ -30,19 +30,28 @@ class statement:
                     self.interpreter.output(f'CALL {self.m_statement[2]} in object {self.m_statement[1]} with args {self.m_statement[3:]}')
                 match self.m_statement[1]:
                     case self.interpreter.ME_DEF:
-                        m = self.m_obj.getMethod(self.m_statement[2])
-                        self.getParams(m.params, fields, vlocal)
-                        self.m_obj.run_method(m, self.m_params, fields)
+                        self.evalparams(fields, vlocal)
+                        m, o = self.m_obj.getMethod(self.m_statement[2], self.m_params)
+                        self.getParams(m.params)
+                        o.run_method(m, self.m_params)
+                    case self.interpreter.SUPER_DEF:
+                        if not self.m_obj.parent:
+                            self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid call to super object by class {self.m_obj.m_class}')
+                        self.evalparams(fields, vlocal)
+                        m, o = self.m_obj.parent.getMethod(self.m_statement[2], self.m_params)
+                        self.getParams(m.params)
+                        o.run_method(m, self.m_params)
                     case _:
                         val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
-                        if val.type == types.VOID: #might have to change to if not val.type (None)
+                        if not val.m_value:
                             self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
                         elif not isinstance(val.type, classDef):
                              self.interpreter.error(ErrorType.FAULT_ERROR, description=f'invalid object pointer {self.m_statement[1]}')
                         obj = val.m_value
-                        m = obj.getMethod(self.m_statement[2])
-                        self.getParams(m.params, fields, vlocal)
-                        obj.run_method(m, self.m_params, obj.getfields())
+                        self.evalparams(fields, vlocal)
+                        m, o = obj.getMethod(self.m_statement[2], self.m_params)
+                        self.getParams(m.params)
+                        o.run_method(m, self.m_params)
 
             case self.interpreter.IF_DEF:
                 #DEBUGGING
@@ -52,9 +61,15 @@ class statement:
                 return self.handleIf(method, fields, vlocal)
 
             case self.interpreter.INPUT_INT_DEF:
+                v = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
+                if v.type != types.INT:
+                    self.interpreter.output(ErrorType.TYPE_ERROR)
                 self.handleInput(types.INT)
 
             case self.interpreter.INPUT_STRING_DEF:
+                v = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
+                if v.type != types.STRING:
+                    self.interpreter.output(ErrorType.TYPE_ERROR)
                 self.handleInput(types.STRING)
 
             case self.interpreter.PRINT_DEF:
@@ -74,8 +89,6 @@ class statement:
                 method.stackframe -= 1
                 if len(self.m_statement) == 2:
                     val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
-                    if self.interpreter.trace:
-                        self.interpreter.output(f'returning {val}')
                     return val
                 else:
                     return self.rval
@@ -87,11 +100,11 @@ class statement:
                 #check if in locals then params then fields for shadowing
                 self.handleSet(fields, vlocal)
 
-                if self.interpreter.trace:
-                    t = [str(key) + ':' + str(self.m_params[key].m_value) for key in self.m_params]
-                    self.interpreter.output(f'params: {t}' )
-                    p = [[str(key) + ':' + str(vlocal[i][key].m_value) for key in vlocal[i]] for i in range(len(vlocal))]
-                    self.interpreter.output(f'local vars: {p}')
+                # if self.interpreter.trace:
+                #     t = [str(key) + ':' + str(self.m_params[key].m_value) for key in self.m_params]
+                #     self.interpreter.output(f'params: {t}' )
+                #     p = [[str(key) + ':' + str(vlocal[i][key].m_value) for key in vlocal[i]] for i in range(len(vlocal))]
+                #     self.interpreter.output(f'local vars: {p}')
 
             case self.interpreter.LET_DEF:
                 if self.interpreter.trace:
@@ -115,7 +128,6 @@ class statement:
                 vlocal.pop()
                 return r
                 
-
             case self.interpreter.WHILE_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'WHILE LOOP with condition {self.m_statement[1]}')
@@ -148,35 +160,46 @@ class statement:
             if field.type == val.type:
                 field.setvalue(val)
             elif isinstance(field.type, classDef):
-                if val.type == types.VOID: #null
+                if val.type == types.NULL: #null
                     val.type = field.type
                     field.setvalue(val)
-                #elif for inheritance
+                elif isinstance(val.type, classDef):
+                    if self.typematch(field.type, val.type):
+                        field.setvalue(val)
+                    else:
+                        self.interpreter.error(ErrorType.TYPE_ERROR)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR)
             else:
                 self.interpreter.error(ErrorType.TYPE_ERROR)
         else:
             self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {self.m_statement[1]}')
-
-
         
     def setvar(self, var, dict, value):
-        # if self.interpreter.trace:
-        #     self.interpreter.output(dict[var].type)
-        #     self.interpreter.output(value.type)
-
         if dict[var].type == value.type:
             dict[var] = value
         elif isinstance(dict[var].type, classDef): 
-            if value.type == types.VOID: #null
+            if value.type == types.NULL: #null
                 value.type = dict[var].type
                 dict[var] = value
-            #elif for inheritance
+            elif isinstance(value.type, classDef):
+                if self.typematch(dict[var].type, value.type):
+                    dict[var] = value
+                else:
+                    self.interpreter.error(ErrorType.TYPE_ERROR)
             else:
                 self.interpreter.error(ErrorType.TYPE_ERROR)
         else:
             self.interpreter.error(ErrorType.TYPE_ERROR)
+
+    def typematch(self, var, val):
+        if var == val:
+            return True
+        elif isinstance(var, classDef) and isinstance(val, classDef):
+            #can only pass a child object into a function that expects a parent object
+            return self.typematch(var, val.parent) #parents and grandparents
+        else:
+            return False
 
     def handleWhile(self, method, fields, vlocal):
         cond = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
@@ -225,7 +248,7 @@ class statement:
                 self.interpreter.error(ErrorType.NAME_ERROR) #duplicate let variables
             elif t[i] == vals[i].type:
                 d[names[i]] = vals[i]
-            elif isinstance(t[i], classDef) and vals[i].type == types.VOID: #null
+            elif isinstance(t[i], classDef) and vals[i].type == types.NULL: #null
                 vals[i].type = t[i]
                 d[names[i]] = vals[i]
             else:
@@ -236,21 +259,19 @@ class statement:
 
         return d
 
-    def getParams(self, params, fields, vlocal):
+    def evalparams(self, fields, vlocal):
+        if self.interpreter.trace:
+            self.interpreter.output(f'EVALUATING PARAMETERS {self.m_statement[3:]}')
+
+        self.m_params = [expression(self.interpreter, x, self.m_obj, self.m_params, fields, vlocal).evaluate() for x in self.m_statement[3:]]
+
+    def getParams(self, params):
         if self.interpreter.trace:
             self.interpreter.output(f"GETTING PARAMETERS {params}")
-          
-        values = [expression(self.interpreter, x, self.m_obj, self.m_params, fields, vlocal).evaluate() for x in self.m_statement[3:]]
-        if len(values) != len(params):
-            self.interpreter.error(ErrorType.TYPE_ERROR, description="Incorrect number of parameters")
 
-        pdict = {}
+        #at this point parameter type and number checking has already happened
 
-        for i in range(len(params)):
-            if self.interpreter.types[params[i][0]] != values[i].type:
-                self.interpreter.error(ErrorType.TYPE_ERROR)
-            pdict[params[i][1]] = values[i]       
-        
+        pdict = {params[i][1]:self.m_params[i] for i in range(len(self.m_params))}
         self.m_params = pdict
 
     def handleInput(self, type):

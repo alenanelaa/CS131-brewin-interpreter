@@ -6,7 +6,7 @@ class expression:
     binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!=', '&', '|'}
     unops = {'!'}
 
-    def __init__(self, inter, expr, o, p, f, l): #UPDATE ALL CREATIONS OF EXPRESSION OBJECT TO INCLUDE LOCAL VARS
+    def __init__(self, inter, expr, o, p, f, l):
         self.interpreter, self.m_expr, self.m_obj, self.m_params, self.m_fields, self.local = inter, expr, o, p, f, l
 
     def evaluate(self):
@@ -14,7 +14,7 @@ class expression:
         if self.interpreter.trace:
             self.interpreter.output(f'EVALUATE expression {self.m_expr}')
 
-        #constant or field
+        #constant or variable
         if isinstance(self.m_expr, str):
             r =  self.getValue(self.m_expr)
         elif self.m_expr[0] == self.interpreter.CALL_DEF:
@@ -22,19 +22,28 @@ class expression:
                     self.interpreter.output(f'CALL {self.m_expr[2]} in object {self.m_expr[1]} with args {self.m_expr[3:]}')
             match self.m_expr[1]:
                 case self.interpreter.ME_DEF:
-                    m = self.m_obj.getMethod(self.m_expr[2])
+                    self.evalparams()
+                    m, o = self.m_obj.getMethod(self.m_expr[2], self.m_params)
                     self.getParams(m.params)
-                    r = self.m_obj.run_method(m, self.m_params, self.m_fields)
+                    r = o.run_method(m, self.m_params)
+                case self.interpreter.SUPER_DEF:
+                        if not self.m_obj.parent:
+                            self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid call to super object by class {self.m_obj.m_class}')
+                        self.evalparams()
+                        m, o = self.m_obj.parent.getMethod(self.m_expr[2], self.m_params)
+                        self.getParams(m.params)
+                        o.run_method(m, self.m_params)
                 case _:
                     val = expression(self.interpreter, self.m_expr[1], self.m_obj, self.m_params, self.m_fields, self.local).evaluate()
-                    if val.type == types.VOID:
+                    if val.type == types.NULL:
                         self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
                     elif not isinstance(val.type, classDef):
                         self.interpreter.error(ErrorType.FAULT_ERROR, description = f'invalid object pointer {self.m_expr[1]}')
                     obj = val.m_value
-                    m = obj.getMethod(self.m_expr[2])
+                    self.evalparams()
+                    m, o = obj.getMethod(self.m_expr[2], self.m_params)
                     self.getParams(m.params)
-                    r = obj.run_method(m, self.m_params, obj.getfields())
+                    r = o.run_method(m, self.m_params)
         elif self.m_expr[0] == self.interpreter.NEW_DEF:
             cdef = self.interpreter.findClassDef(self.m_expr[1])
             obj = cdef.instantiate_object()
@@ -45,9 +54,7 @@ class expression:
             r =  self.unaryExpression()
         else:
             self.interpreter.error(ErrorType.NAME_ERROR)
-
         return r
-
 
     def unaryExpression(self):
         arg1 = self.getValue(self.m_expr[1])
@@ -70,7 +77,6 @@ class expression:
         match self.m_expr[0]:
             #arithmetic operators
             case '+':
-                #type checking
                 if arg1.type == types.INT and arg2.type == types.INT:
                     return value(types.INT, arg1 + arg2)
                 elif arg1.type == types.STRING and arg2.type == types.STRING:
@@ -78,71 +84,52 @@ class expression:
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '-':
-                #type checking
                 if arg1.type != types.INT or arg2.type != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 - arg2)
             case '*':
-                #type checking
                 if arg1.type != types.INT or arg2.type != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 * arg2)
             case '/':
-                #type checking
                 if arg1.type != types.INT or arg2.type != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 // arg2)
             case '%':
-                #type checking
                 if arg1.type != types.INT or arg2.type != types.INT:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 return value(types.INT, arg1 % arg2)     
             #boolean operators/comparators
             case '<':
-                #type checking
-                if arg1.type == types.INT and arg2.type == types.INT:
-                    return value(types.BOOL, arg1 < arg2)
-                elif arg1.type == types.STRING and arg2.type == types.STRING:
+                if (arg1.type == types.INT and arg2.type == types.INT) or (arg1.type == types.STRING and arg2.type == types.STRING):
                     return value(types.BOOL, arg1 < arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '>':
-                #type checking
-                if arg1.type == types.INT and arg2.type == types.INT:
-                    return value(types.BOOL, arg1 > arg2)
-                elif arg1.type == types.STRING and arg2.type == types.STRING:
+                if (arg1.type == types.INT and arg2.type == types.INT) or (arg1.type == types.STRING and arg2.type == types.STRING):
                     return value(types.BOOL, arg1 > arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '<=':
-                #type checking
-                if arg1.type == types.INT and arg2.type == types.INT:
-                    return value(types.BOOL, arg1 <= arg2)
-                elif arg1.type == types.STRING and arg2.type == types.STRING:
+                if (arg1.type == types.INT and arg2.type == types.INT) or (arg1.type == types.STRING and arg2.type == types.STRING):
                     return value(types.BOOL, arg1 <= arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '>=':
-                if arg1.type == types.INT and arg2.type == types.INT:
-                    return value(types.BOOL, arg1 >= arg2)
-                elif arg1.type == types.STRING and arg2.type == types.STRING:
+                if (arg1.type == types.INT and arg2.type == types.INT) or (arg1.type == types.STRING and arg2.type == types.STRING):
                     return value(types.BOOL, arg1 >= arg2)
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '==':
-                if arg1.type == types.VOID or arg2.type == types.VOID:
+                if self.typematch(arg1.type, arg2.type) or (arg1.type == types.NULL or arg2.type == types.NULL):
                     return value(types.BOOL, arg1 == arg2)
-                elif arg1.type != arg2.type:
-                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
-                    return value(types.BOOL, arg1 == arg2)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '!=':
-                if arg1.type == types.VOID or arg2.type == types.VOID:
+                if self.typematch(arg1.type, arg2.type) or (arg1.type == types.NULL or arg2.type == types.NULL):
                     return value(types.BOOL, arg1 != arg2)
-                elif arg1.type != arg2.type:
-                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
                 else:
-                    return value(types.BOOL, arg1 != arg2)
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
             case '&':
                 if arg1.type != types.BOOL or arg2.type != types.BOOL:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=err_msg)
@@ -154,18 +141,28 @@ class expression:
             case _:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'{self.m_expr[0]} is an invalid operator')
 
+    def typematch(self, a1, a2):
+        if a1 == a2:
+            return True
+        elif isinstance(a1, classDef) and isinstance(a2, classDef):
+            #if one object is a parent/grandparent/etc of the other
+            return self.typematch(a1, a2.parent) or self.typematch(a2, a1.parent)
+        else:
+            return False
+
     def getValue(self, token):
 
-        local = self.searchlocals(token, self.local)
+        if isinstance(token, str):
+            local = self.searchlocals(token, self.local)
         #edge case for params because they are already mapped to values
         if isinstance(token, value):
             return token
-
-        #recursion support
         elif isinstance(token, list):
             val = expression(self.interpreter, token, self.m_obj, self.m_params, self.m_fields, self.local).evaluate()
+        elif token == 'me':
+            val = value(self.m_obj.m_class, self.m_obj)
         elif token == 'null':
-            val = value(types.VOID, None)
+            val = value(types.NULL, None)
         elif token == 'true' or token == 'false':
             val = value(types.BOOL, (token == 'true'))
         elif token[0] == '"' and token[-1] == '"':
@@ -183,37 +180,29 @@ class expression:
         return val
     
     def isfieldname(self, fieldname):
-        for f in self.m_fields:
-            if f.m_name == fieldname:
-                return True
-        return False
+        fnames = [f.m_name for f in self.m_fields]
+        return fieldname in fnames
 
-    #only gets called if fieldname is a valid, defined field
     def getField(self, fieldname):
         for f in self.m_fields:
             if f.m_name == fieldname:
                 return f
     
+    def evalparams(self):
+        if self.interpreter.trace:
+            self.interpreter.output(f'EVALUATING PARAMETERS {self.m_expr[3:]}')
+
+        self.m_params = [expression(self.interpreter, x, self.m_obj, self.m_params, self.m_fields, self.local).evaluate() for x in self.m_expr[3:]]
+
     def getParams(self, params):
         if self.interpreter.trace:
             self.interpreter.output(f"GETTING PARAMETERS {params}")
 
-        values = [expression(self.interpreter, x, self.m_obj, self.m_params, self.m_fields, self.local).evaluate() for x in self.m_expr[3:]]
-        if len(values) != len(params):
-            self.interpreter.error(ErrorType.TYPE_ERROR, description="Incorrect number of parameters")
-
-        pdict = {}
-
-        for i in range(len(params)):
-            if self.interpreter.types[params[i][0]] != values[i].type:
-                self.interpreter.error(ErrorType.TYPE_ERROR)
-            pdict[params[i][1]] = values[i]       
-        
+        pdict = {params[i][1]:self.m_params[i] for i in range(len(self.m_params))}
         self.m_params = pdict
 
     def searchlocals(self, token, localvars):
+
         for i in range(len(localvars)-1, -1, -1):
             if token in localvars[i]:
                 return localvars[i][token]
-        
-        return

@@ -13,7 +13,7 @@ class Interpreter(InterpreterBase):
         self.m_classes = []
         self.callstack = []
         #add class types as needed during initialization
-        self.types = {'int':types.INT, 'string':types.STRING, 'null':types.VOID, 'bool':types.BOOL}
+        self.types = {'int':types.INT, 'string':types.STRING, 'null':types.NULL, 'bool':types.BOOL}
         #for debugging
         self.trace = trace_output
 
@@ -29,38 +29,65 @@ class Interpreter(InterpreterBase):
         self.trackClasses(tokens)
         mainclass = self.findClassDef('main')
         obj = mainclass.instantiate_object()
-        mainmethod = obj.getMethod('main')
-        obj.run_method(mainmethod, {}, obj.m_fields)
+        mainmethod, mainobj = obj.getMethod('main', {})
+        mainobj.run_method(mainmethod, {})
         
     #discover and track all classes
     def trackClasses(self, tokens):
         #top level of parsed program must be class
+        definitions = []
         for class_def in tokens:
             if self.classDefined(class_def[1]):
                 self.error(ErrorType.TYPE_ERROR, description=f'Duplicate class name {class_def[1]}')
-            a = classDef(self, class_def[1])
-            self.m_classes.append(a)
-            self.types[class_def[1]] = a #add object type (class type) to the map of possible variable types
-            #classes have either field or method handlers
-            for item in class_def[2:]:
-                match item[0]:
-                    case 'method':
-                        if a.hasMethod(item[2]):
-                            self.error(ErrorType.NAME_ERROR, description=f'duplicate method {item[1]}')
-                        a.m_methods.append(methodDef(self, item[2], a, item[3], item[4], item[1]))
-                        
-                    case 'field':
-                        if a.hasField(item[2]):
-                            self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[2]}')
-                        a.m_fields.append(fieldDef(self, item[2], item[1], item[3]))
+
+            if isinstance(class_def[2], list):
+                c = classDef(self, class_def[1])
+                self.m_classes.append(c)
+                self.types[class_def[1]] = c
+                definitions.append(class_def[2:])
+            elif class_def[2] == self.INHERITS_DEF:
+                parent = self.findClassDef(class_def[3])
+                c = classDef(self, class_def[1], p = parent)
+                self.m_classes.append(c)
+                self.types[class_def[1]] = c
+                definitions.append(class_def[4:])
+            else:
+                self.error(ErrorType.SYNTAX_ERROR)
+
+        for i in range(len(self.m_classes)):
+            self.initializeClass(definitions[i], self.m_classes[i])
+            
+        # a = classDef(self, class_def[1])
+        # self.m_classes.append(a)
+        # self.types[class_def[1]] = a #add object type (class type) to the map of possible variable types
+        # #check for derived classes
+        # if isinstance(class_def[2], list): #no inheritance, just methods and fields
+        #     definitions.append(class_def[2:])
+        #     self.initializeClass(class_def[2:], a)
+        # elif class_def[2] == self.INHERITS_DEF:
+        #     p = self.findClassDef(class_def[3])
+        #     a.inherits(p)
+
+        #     self.initializeClass(class_def[4:], a)                            
+        # else:
+        #     self.error(ErrorType.SYNTAX_ERROR)
+
+    def initializeClass(self, mf, a):
+        for item in mf:
+            match item[0]:
+                case 'method':
+                    if a.hasMethod(item[2]):
+                        self.error(ErrorType.NAME_ERROR, description=f'duplicate method {item[1]}')
+                    a.m_methods.append(methodDef(self, item[2], a, item[3], item[4], item[1]))
+                case 'field':
+                    if a.hasField(item[2]):
+                        self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[2]}')
+                    a.m_fields.append(fieldDef(self, item[2], item[1], item[3]))
 
     def classDefined(self, classname):
-        for c in self.m_classes:
-            if c.className == classname:
-                return True
-        return False
+        cnames = [c.className for c in self.m_classes]
+        return classname in cnames
     
-    #find a specific class definition
     def findClassDef(self, classname):
         for c in self.m_classes:
             if c.className == classname:

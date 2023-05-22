@@ -2,6 +2,8 @@
   (method void foo ((int q) (int r)) (print q r))
   (method int square ((int q)) (return (* q q)))
 )
+
+
 (class main
       (field other_class other null)
       (field int result 0)

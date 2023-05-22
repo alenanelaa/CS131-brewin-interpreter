@@ -1,10 +1,11 @@
 from enum import Enum
 
 class types(Enum):
-    VOID = 0
+    NULL = 0
     BOOL = 1
     INT = 2
     STRING = 3
+    NOTHING = 4
     # OBJECT = 4
 
 #class for brewin values, keeps track of type and value

@@ -4,10 +4,18 @@ from values import value, types
 from classes import classDef
 
 class methodDef:
-    defaults = {'int':value(types.INT, 0), 'string': value(types.STRING, ''), 'bool':value(types.BOOL, False), 'void':value(types.VOID, None)}
+    defaults = {'int':value(types.INT, 0), 'string': value(types.STRING, ''), 'bool':value(types.BOOL, False), 'void':value(types.NOTHING, None)}
 
     def __init__(self, i, n, c, p, top, r):
         self.interpreter, self.m_name, self.m_class, self.params, self.m_statement = i, n, c, p, top
+
+        paramtypes = [p[index][0] for index in range(len(self.params))]
+        paramnames = [p[index][1] for index in range(len(self.params))]
+        if len(paramnames) != len(set(paramnames)):
+            self.interpreter.error(ErrorType.NAME_ERROR, description='duplicate formal param name')
+        if any(param not in self.interpreter.types for param in paramtypes):
+            self.interpreter.error(ErrorType.TYPE_ERROR)
+
         if r in methodDef.defaults:
             self.default_return = methodDef.defaults[r]
         elif isinstance(self.interpreter.types[r], classDef): #default return null if object not returned in method
@@ -20,8 +28,6 @@ class methodDef:
     def findField(self, fieldname):
         return self.m_class.getField(fieldname)
 
-    #execute top level statement
-    #pass in localvar stats into run_statement function?
     def execute(self, obj, params, fields):
 
         #push to stack
@@ -36,9 +42,6 @@ class methodDef:
             cur_frame = self.interpreter.stackpop()
             self.stackframe -= 1
 
-            # if self.interpreter.trace:
-            #     self.interpreter.output(f'current_frame: {cur_frame}')
-
             if not cur_frame:
                 break
 
@@ -50,12 +53,7 @@ class methodDef:
             st = statement(self.interpreter, s, obj, params, self.default_return)
             r = st.run_statement(self, fields, self.localvar)
 
-        if self.interpreter.trace:
-            self.interpreter.output(f'method returned {r}')
-
         if not r:
-            if self.interpreter.trace:
-                self.interpreter.output('default return')
             return self.default_return
         
         if r.type != self.default_return.type:

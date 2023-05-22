@@ -1,8 +1,0 @@
-(class main
-    (field main obj null)
-    (method void main () 
-        (begin 
-          (set obj null)
-          (print "done"))
-    )
-)
