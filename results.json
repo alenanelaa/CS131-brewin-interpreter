@@ -914,13 +914,13 @@
         },
         {
             "name": "Correctness | test_valid_return3",
-            "score": 0,
+            "score": 1,
             "max_score": 1,
             "visibility": "visible"
         },
         {
             "name": "Correctness | test_valid_return4",
-            "score": 0,
+            "score": 1,
             "max_score": 1,
             "visibility": "visible"
         },
@@ -932,7 +932,7 @@
         },
         {
             "name": "Correctness | test_valid_return6",
-            "score": 0,
+            "score": 1,
             "max_score": 1,
             "visibility": "visible"
         },

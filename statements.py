@@ -87,9 +87,15 @@ class statement:
 
                 self.interpreter.stackpop()
                 method.stackframe -= 1
+
                 if len(self.m_statement) == 2:
-                    val = expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
-                    return val
+                    if self.m_statement[1] == 'null':
+                        if self.rval.type == types.BOOL or self.rval.type == types.INT or self.rval.type == types.STRING or self.rval.type == types.NOTHING:
+                            self.interpreter.error(ErrorType.TYPE_ERROR)
+                        else:
+                            return value(self.rval.type, None)
+
+                    return expression(self.interpreter, self.m_statement[1], self.m_obj, self.m_params, fields, vlocal).evaluate()
                 else:
                     return self.rval
 

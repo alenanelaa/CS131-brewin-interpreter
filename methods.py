@@ -56,7 +56,18 @@ class methodDef:
         if not r:
             return self.default_return
         
-        if r.type != self.default_return.type:
+        if not self.typematch(self.default_return.type, r.type):
             self.interpreter.error(ErrorType.TYPE_ERROR)
         
-        return r         
+        return r
+    
+    def typematch(self, default, r):
+        if default == r:
+            return True
+        elif isinstance(default, classDef) and isinstance(r, classDef):
+            #can only pass a child object into a function that expects a parent object
+            return self.typematch(default, r.parent) #parents and grandparents
+        elif isinstance(default, classDef) and r == types.NULL: #null? but i don't know if this is allowed
+            return True
+        else:
+            return False
