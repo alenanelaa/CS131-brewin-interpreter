@@ -8,6 +8,7 @@ The top-level interpreterv2.py file exports the Interpreter class that implement
 
 # Known Issues
 
+For classes that are derived from parent classes, the case in which a function in the parent class calls a method in the object with the 'me' keyword is not handled correctly (i.e. does not call the most derived version of a method)
 
 ## Licensing and Attribution
 
