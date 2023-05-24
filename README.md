@@ -1,6 +1,6 @@
 # CS 131 Spring 2023: Brewin Interpreter Version 2
 
-This is the repository for the first stage of the quarter-long project for the CS 131 course at UCLA. The project specs are as follows:
+This is the repository for the second stage of the quarter-long project for the CS 131 course at UCLA. The project specs are as follows:
 
 [Project 2 Spec](https://docs.google.com/document/d/1simlDMO0TK-YNDPYjkuU1C3fcaBpbIVYRaKD1pdqJj8/edit?usp=sharing)
 
