@@ -2,8 +2,9 @@ from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 
 from classes import classDef
+from objects import objDef
 from methods import methodDef
-from fields import field, fieldDef
+from fields import fieldDef
 from values import types
 
 class Interpreter(InterpreterBase):
@@ -28,9 +29,19 @@ class Interpreter(InterpreterBase):
 
         self.trackClasses(tokens)
         mainclass = self.findClassDef('main')
-        obj = mainclass.instantiate_object()
+        obj = self.instantiate_object(mainclass)
         mainmethod, mainobj = obj.getMethod('main', {})
         mainobj.run_method(mainmethod, {})
+
+    def instantiate_object(self, classdef):
+        f = [d.newfield() for d in classdef.m_fields]
+        if classdef.parent:
+            # p = classdef.parent.instantiate_object()
+            obj = objDef(self, classdef, f, parent=classdef.parent)
+        else:
+            obj = objDef(self, classdef, f)
+            
+        return obj
         
     #discover and track all classes
     def trackClasses(self, tokens):
@@ -57,21 +68,6 @@ class Interpreter(InterpreterBase):
         for i in range(len(self.m_classes)):
             self.initializeClass(definitions[i], self.m_classes[i])
             
-        # a = classDef(self, class_def[1])
-        # self.m_classes.append(a)
-        # self.types[class_def[1]] = a #add object type (class type) to the map of possible variable types
-        # #check for derived classes
-        # if isinstance(class_def[2], list): #no inheritance, just methods and fields
-        #     definitions.append(class_def[2:])
-        #     self.initializeClass(class_def[2:], a)
-        # elif class_def[2] == self.INHERITS_DEF:
-        #     p = self.findClassDef(class_def[3])
-        #     a.inherits(p)
-
-        #     self.initializeClass(class_def[4:], a)                            
-        # else:
-        #     self.error(ErrorType.SYNTAX_ERROR)
-
     def initializeClass(self, mf, a):
         for item in mf:
             match item[0]:

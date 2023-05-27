@@ -22,7 +22,7 @@ class statement:
                     r = s.run_statement(method, fields, vlocal)
 
                     if r: #if statement returns anything besides None, that means it was a return statement
-                        break
+                        return r
 
             case self.interpreter.CALL_DEF:
                     #DEBUGGING
@@ -31,7 +31,7 @@ class statement:
                 match self.m_statement[1]:
                     case self.interpreter.ME_DEF:
                         self.evalparams(fields, vlocal)
-                        m, o = self.m_obj.getMethod(self.m_statement[2], self.m_params)
+                        m, o = self.m_obj.me.getMethod(self.m_statement[2], self.m_params)
                         self.getParams(m.params)
                         o.run_method(m, self.m_params)
                     case self.interpreter.SUPER_DEF:
@@ -86,7 +86,6 @@ class statement:
                     self.interpreter.output("RETURN from method called")
 
                 self.interpreter.stackpop()
-                method.stackframe -= 1
 
                 if len(self.m_statement) == 2:
                     if self.m_statement[1] == 'null':

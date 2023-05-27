@@ -23,7 +23,7 @@ class expression:
             match self.m_expr[1]:
                 case self.interpreter.ME_DEF:
                     self.evalparams()
-                    m, o = self.m_obj.getMethod(self.m_expr[2], self.m_params)
+                    m, o = self.m_obj.me.getMethod(self.m_expr[2], self.m_params)
                     self.getParams(m.params)
                     r = o.run_method(m, self.m_params)
                 case self.interpreter.SUPER_DEF:
@@ -46,7 +46,7 @@ class expression:
                     r = o.run_method(m, self.m_params)
         elif self.m_expr[0] == self.interpreter.NEW_DEF:
             cdef = self.interpreter.findClassDef(self.m_expr[1])
-            obj = cdef.instantiate_object()
+            obj = self.interpreter.instantiate_object(cdef)
             return value(cdef, obj)
         elif self.m_expr[0] in expression.binops:
             r =  self.binaryExpression()

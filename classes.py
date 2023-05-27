@@ -1,4 +1,3 @@
-from objects import objDef
 from intbase import ErrorType
 from values import types
 
@@ -7,24 +6,6 @@ class classDef:
         self.interpreter, self.className, self.parent = inter, name, p
         self.m_methods = []
         self.m_fields = []
-
-    #instantiating class object
-    def instantiate_object(self):
-        f = [d.newfield() for d in self.m_fields]
-        if self.parent:
-            p = self.parent.instantiate_object()
-            obj = objDef(self.interpreter, self, f, parent=p)
-        else:
-            obj = objDef(self.interpreter, self, f)
-
-        # if self.interpreter.trace:
-        #     self.interpreter.output(f'INSTANTIATE object of type {self.className}')
-        #     mnames = [m.m_name for m in self.m_methods]
-        #     fnames = [f.m_name for f in obj.m_fields]
-        #     self.interpreter.output(f'methods in object: {mnames}')
-        #     self.interpreter.output(f'fields in object: {fnames}')
-            
-        return obj
     
     def hasField(self, fieldname):
         for f in self.m_fields:
@@ -66,6 +47,9 @@ class classDef:
                     return -1
                 if not all([self.typematch(t1[i], t2[i]) for i in range(len(t1))]):
                     return -1
+                
+                for i in range(len(t1)):
+                    params[i].type = t1[i] #set the types properly
                 
                 return m
             
