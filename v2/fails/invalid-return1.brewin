@@ -1,4 +1,0 @@
-(class main
-  (method int foo () (return false))
-  (method void main () (print (call me foo)))
-)

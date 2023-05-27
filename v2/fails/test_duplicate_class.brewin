@@ -1,9 +1,0 @@
-(class main
-  (method void main () (return))
-)
-(class dog
-  (method void main () (return))
-)
-(class dog
-  (method void main () (return))
-)

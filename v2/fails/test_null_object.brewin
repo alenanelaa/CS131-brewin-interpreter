@@ -1,8 +1,0 @@
-(class main
-  (field main other null)
-  (method void main ()
-    (begin
-      (call other foo)
-    )
-  )
-)

@@ -14,9 +14,11 @@ class methodDef:
             self.interpreter.error(ErrorType.NAME_ERROR, description='duplicate formal param name')
         if any(param not in self.interpreter.types for param in paramtypes):
             self.interpreter.error(ErrorType.TYPE_ERROR)
-
+        
         if r in methodDef.defaults:
             self.default_return = methodDef.defaults[r]
+        elif r not in self.interpreter.types:
+            self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid method return type {r}')
         elif isinstance(self.interpreter.types[r], classDef): #default return null if object not returned in method
             self.default_return = value(self.interpreter.types[r], None)
         else:
@@ -32,7 +34,5 @@ class methodDef:
         elif isinstance(default, classDef) and isinstance(r, classDef):
             #can only pass a child object into a function that expects a parent object
             return self.typematch(default, r.parent) #parents and grandparents
-        elif isinstance(default, classDef) and r == types.NULL: #null? but i don't know if this is allowed
-            return True
         else:
             return False

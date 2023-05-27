@@ -1,3 +1,0 @@
-(class main
-  (method void main () (print 5 6 7 "ab" "cd" "ef" true false))
-)

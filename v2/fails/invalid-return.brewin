@@ -1,6 +1,0 @@
-(class main
-  (method int number ()
-    (return "string"))
-  (method void main ()
-    (print (call me number)))
-)

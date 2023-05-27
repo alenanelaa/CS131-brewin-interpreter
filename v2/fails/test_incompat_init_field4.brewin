@@ -1,5 +1,0 @@
-(class main
-  (field person p true)
-  (method void main ()
-  )
-)

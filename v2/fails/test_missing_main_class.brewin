@@ -1,5 +1,0 @@
-(class foo
-  (method void main ()
-    (return)
-  )
-)

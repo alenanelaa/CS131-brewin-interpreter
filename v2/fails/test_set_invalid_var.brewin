@@ -1,5 +1,0 @@
-(class main
- (method void main ()
-  (set blah 10)
- )
-)

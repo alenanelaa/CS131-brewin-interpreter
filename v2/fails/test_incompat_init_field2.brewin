@@ -1,5 +1,0 @@
-(class main
-  (field bool p "hi")
-  (method void main ()
-  )
-)

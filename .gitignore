@@ -131,9 +131,12 @@ dmypy.json
 # mac stuff *shakes fist*
 .DS_Store
 
+#custom
 results.json
 getparsed.py
 tracing.py
 notracing.py
 tester.py
 harness.py
+v2
+v2 custom

@@ -1,5 +1,0 @@
-(class main
-  (field int hi "hi")
-  (method void main ()
-    (print "there should be an error"))
-)

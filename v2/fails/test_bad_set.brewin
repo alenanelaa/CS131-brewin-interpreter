@@ -1,8 +1,0 @@
-(class main
-    (field bool a false)
- (method string foo () 
-   (return "dsfasdf"))
- (method void main ()
-  (set a (call me foo))
- )
-)

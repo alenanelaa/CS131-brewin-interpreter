@@ -1,7 +1,0 @@
-(class main
-  (field int q 30)
-  (method void foo ((int x)) (print x))
-  (method void main ()
-    (call me foo q)
-  )
-)

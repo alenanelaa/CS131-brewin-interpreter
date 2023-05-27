@@ -1,5 +1,0 @@
-(class main
-  (method void main ()
-    (print "hello world" x)
-  )
-)
