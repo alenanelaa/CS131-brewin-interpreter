@@ -1,4 +1,3 @@
-from intbase import ErrorType
 from values import types
 
 class classDef:
@@ -12,13 +11,6 @@ class classDef:
             if f.m_name == fieldname:
                 return True
         return False
-    
-    def getField(self, fieldname):
-        for f in self.m_fields:
-            if f.m_name == fieldname:
-                return f
-
-        self.interpreter.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
 
     def hasMethod(self, methodname):
         for m in self.m_methods:
@@ -51,6 +43,5 @@ class classDef:
                 for i in range(len(t1)):
                     params[i].type = t1[i] #set the types properly
                 
-                return m
-            
+                return m       
         return -1

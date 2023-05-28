@@ -139,6 +139,5 @@ notracing.py
 tester.py
 harness.py
 v2
-v2 custom
 statements.py
 expressions.py

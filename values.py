@@ -7,9 +7,13 @@ class types(Enum):
     STRING = 3
     NOTHING = 4
 
-class variable:
-    def __init__(self, name, type, val):
-        self.name, self.type, self.val = name, type, val
+class environment:
+    def __init__(self, p):
+        self.params = p
+        self.locals = []
+    
+    def addlocal(self, scope):
+        self.locals.append(scope)
 
 #class for brewin values, keeps track of type and value
 class value:

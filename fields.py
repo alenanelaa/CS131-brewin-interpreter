@@ -25,7 +25,6 @@ class fieldDef:
         elif all(c.isdigit() for c in val):
             v = value(types.INT, int(val))
         else:
-            #invalid value -> may need to change later
             self.interpreter.error(ErrorType.TYPE_ERROR)
 
         if v.type != self.m_type:
@@ -39,26 +38,8 @@ class field:
     def __init__(self, i, n, t, val):
         self.interpreter, self.m_name, self.m_type, self.m_val = i, n, t, val
 
-    def getValue(self, token):
-        if token == 'null':
-            val = value(types.VOID, None)
-        elif token == 'true' or token == 'false':
-            val = value(types.BOOL, (token == 'true'))
-        elif token[0] == '"' and token[-1] == '"':
-            val = value(types.STRING, token.strip('"'))
-            return val
-        else:
-            val = value(types.INT, int(token))
-        return val
-
-    def setname(self, name):
-        self.m_name = name
-
     def setvalue(self, val):
         self.m_val = val
-
-    def getname(self):
-        return self.m_name
 
     def getvalue(self):
         return self.m_val
