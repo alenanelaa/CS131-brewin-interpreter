@@ -6,7 +6,10 @@ class types(Enum):
     INT = 2
     STRING = 3
     NOTHING = 4
-    # OBJECT = 4
+
+class variable:
+    def __init__(self, name, type, val):
+        self.name, self.type, self.val = name, type, val
 
 #class for brewin values, keeps track of type and value
 class value:
@@ -31,45 +34,29 @@ class value:
         return str(self.m_value)
 
     #operation wrappers for brewin values
-
     def __add__(self, other):
         return self.m_value + other.m_value
-    
     def __sub__(self, other):
         return self.m_value - other.m_value
-    
     def __mul__(self, other):
         return self.m_value * other.m_value
-    
     def __truediv__(self, other):
         return self.m_value/other.m_value
-    
     def __floordiv__(self, other):
         return self.m_value//other.m_value
-    
     def __mod__(self, other):
         return self.m_value % other.m_value
-    
-    #comparison operators
-
     def __lt__(self, other):
         return self.m_value < other.m_value
-    
     def __gt__(self, other):
         return self.m_value > other.m_value
-
     def __eq__(self, other):
         return self.m_value == other.m_value
-
     def __le__(self, other):
         return self.m_value <= other.m_value
-
     def __ge__(self, other):
         return self.m_value >= other.m_value
-
     def __ne__(self, other):
         return self.m_value != other.m_value
-
-    #unary not operator
     def __not__(self):
         return not self.m_value

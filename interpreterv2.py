@@ -36,11 +36,9 @@ class Interpreter(InterpreterBase):
     def instantiate_object(self, classdef):
         f = [d.newfield() for d in classdef.m_fields]
         if classdef.parent:
-            # p = classdef.parent.instantiate_object()
             obj = objDef(self, classdef, f, parent=classdef.parent)
         else:
             obj = objDef(self, classdef, f)
-            
         return obj
         
     #discover and track all classes
