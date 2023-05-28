@@ -132,12 +132,9 @@ dmypy.json
 .DS_Store
 
 #custom
+v3
 results.json
-getparsed.py
 tracing.py
 notracing.py
 tester.py
 harness.py
-v2
-statements.py
-expressions.py

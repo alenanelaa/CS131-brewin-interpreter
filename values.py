@@ -17,6 +17,7 @@ class environment:
 
 #class for brewin values, keeps track of type and value
 class value:
+    defaults = {(types.INT): 0, (types.STRING): "", (types.BOOL): False}
     def __init__(self, type, value):
         self.m_type, self.m_value = type, value
 

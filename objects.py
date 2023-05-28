@@ -145,7 +145,7 @@ class objDef:
                     self.interpreter.output(f'WHILE LOOP with condition {statement[1]}')
                 return self.__handleWhile(statement[1], statement[2], env, rval)
             case _:
-                self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{self.m_statement[0]}" ')
+                self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{statement[0]}" ')
     
     def __evaluate(self, expr, env):
         binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!=', '&', '|'}
@@ -301,20 +301,27 @@ class objDef:
     def __handleLet(self, vars, env):
         t = [self.interpreter.types[vars[i][0]] for i in range(len(vars))]
         names = [vars[i][1] for i in range(len(vars))]
-        vals = [self.__evaluate(vars[i][2], env) for i in range(len(vars))]
+        #vals = [self.__evaluate(vars[i][2], env) for i in range(len(vars))]
         d = {} #empty dict to build local variable scope
         for i in range(len(vars)):
             if names[i] in d:
                 self.interpreter.error(ErrorType.NAME_ERROR) #duplicate let variables
-            elif t[i] == vals[i].type:
-                d[names[i]] = vals[i]
-            elif isinstance(t[i], classDef) and vals[i].type == types.NULL: #null
-                vals[i].type = t[i]
-                d[names[i]] = vals[i]
+            if len(vars[i]) == 2: #default value
+                if isinstance(t[i], classDef):
+                    d[names[i]] = value(t[i], None)
+                else:
+                    d[names[i]] = value(t[i], value.defaults[t[i]])
             else:
-                self.interpreter.error(ErrorType.TYPE_ERROR, description=f"invalid type/type mismatch with local variable {names[i]}")
+                val = self.__evaluate(vars[i][2], env)
+                if self.__typematch(t[i], val.type):
+                    d[names[i]] = val
+                elif isinstance(t[i], classDef) and val.type == types.NULL:
+                    val.type = t[i]
+                    d[names[i]] = val
+                else:
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid type/type mismatch with local variable {names[i]}')
         if self.interpreter.trace:
-            self.interpreter.output(f'local variable scope with vars: {[names[i] +":"+ str(vals[i]) for i in range(len(vars))]}')
+            self.interpreter.output(f'local variable scope with vars: {[names[i] +":"+ str(d[names[i]]) for i in range(len(vars))]}')
         return d
     
     def __handleWhile(self, condition, st, env, rval):

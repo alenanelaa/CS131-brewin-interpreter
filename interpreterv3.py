@@ -76,7 +76,10 @@ class Interpreter(InterpreterBase):
                 case 'field':
                     if a.hasField(item[2]):
                         self.error(ErrorType.NAME_ERROR, description=f'duplicate field {item[2]}')
-                    a.m_fields.append(fieldDef(self, item[2], item[1], item[3]))
+                    if len(item) == 3: #default field value
+                        a.m_fields.append(fieldDef(self, item[2], item[1]))
+                    else:
+                        a.m_fields.append(fieldDef(self, item[2], item[1], item[3]))
 
     def classDefined(self, classname):
         cnames = [c.className for c in self.m_classes]
@@ -86,11 +89,12 @@ class Interpreter(InterpreterBase):
         for c in self.m_classes:
             if c.className == classname:
                 return c
-            
         self.error(ErrorType.TYPE_ERROR, description=f'class {classname} is not defined')
+
+    def mapToDefault(self, type):
+        pass
     
     def stackpush(self, frame):
         self.callstack.append(frame)
-
     def stackpop(self):
         return self.callstack.pop()

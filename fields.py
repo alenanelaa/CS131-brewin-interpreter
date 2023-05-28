@@ -4,7 +4,7 @@ from values import types, value
 from classes import classDef
 
 class fieldDef:
-    def __init__(self, i , n, t, val):
+    def __init__(self, i , n, t, val=None):
         self.interpreter, self.m_name = i, n
 
         if t not in self.interpreter.types:
@@ -12,24 +12,30 @@ class fieldDef:
 
         self.m_type = self.interpreter.types[t]
 
-        if val == 'null':
-            if isinstance(self.interpreter.types[t], classDef): #only object variables can be null (no primitives)
+        if not val:
+            if isinstance(self.m_type, classDef):
                 self.m_val = value(self.m_type, None)
             else:
-                self.interpreter.error(ErrorType.TYPE_ERROR)
-            return
-        elif val == 'true' or val == 'false':
-            v = value(types.BOOL, (val == 'true'))
-        elif val[0] == '"' and val[-1] == '"':
-            v = value(types.STRING, val.strip('"'))
-        elif all(c.isdigit() for c in val):
-            v = value(types.INT, int(val))
+                self.m_val = value.defaults[self.m_type]
         else:
-            self.interpreter.error(ErrorType.TYPE_ERROR)
+            if val == 'null':
+                if isinstance(self.m_type, classDef): #only object variables can be null (no primitives)
+                    self.m_val = value(self.m_type, None)
+                else:
+                    self.interpreter.error(ErrorType.TYPE_ERROR)
+                return
+            elif val == 'true' or val == 'false':
+                v = value(types.BOOL, (val == 'true'))
+            elif val[0] == '"' and val[-1] == '"':
+                v = value(types.STRING, val.strip('"'))
+            elif all(c.isdigit() for c in val):
+                v = value(types.INT, int(val))
+            else:
+                self.interpreter.error(ErrorType.TYPE_ERROR)
 
-        if v.type != self.m_type:
-            self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid type/type mismatch with field {self.m_name}')
-        self.m_val = v
+            if v.type != self.m_type:
+                self.interpreter.error(ErrorType.TYPE_ERROR, description=f'invalid type/type mismatch with field {self.m_name}')
+            self.m_val = v
 
     def newfield(self):
         return field(self.interpreter, self.m_name, self.m_type, self.m_val)
