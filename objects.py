@@ -147,7 +147,10 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'THROW exception {statement[1]}')
                 self.interpreter.stackpop()
-                return value(types.EXCEPTION, statement[1].strip('"'))
+                a = self.__evaluate(statement[1], env)
+                if a.type != types.STRING:
+                    self.interpreter.error(ErrorType.TYPE_ERROR, description=f'thrown exception must be of type string')
+                return value(types.EXCEPTION, a.m_value)
             
             case self.interpreter.TRY_DEF:
                 if self.interpreter.trace:
