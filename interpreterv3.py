@@ -1,7 +1,7 @@
 from intbase import InterpreterBase, ErrorType
 from bparser import BParser
 
-from classes import classDef
+from classes import classDef, templateDef
 from objects import objDef
 from methods import methodDef
 from fields import fieldDef
@@ -10,11 +10,11 @@ from values import types
 class Interpreter(InterpreterBase):
     def __init__(self, console_output=True, inp=None, trace_output=False):
         super().__init__(console_output, inp)   # call InterpreterBase’s constructor
-        #begin with empty list of class definitions, methods, and objects
-        self.m_classes = []
+        self.m_templates = {}
         self.callstack = []
         #add class types as needed during initialization
         self.types = {'int':types.INT, 'string':types.STRING, 'null':types.NULL, 'bool':types.BOOL}
+        self.generics = {}
         #for debugging
         self.trace = trace_output
 
@@ -43,28 +43,33 @@ class Interpreter(InterpreterBase):
         
     #discover and track all classes
     def trackClasses(self, tokens):
-        #top level of parsed program must be class
-        definitions = []
+        m_classes = {}
+        classdefs = {}
         for class_def in tokens:
-            if self.classDefined(class_def[1]):
-                self.error(ErrorType.TYPE_ERROR, description=f'Duplicate class name {class_def[1]}')
-
-            if isinstance(class_def[2], list):
-                c = classDef(self, class_def[1])
-                self.m_classes.append(c)
-                self.types[class_def[1]] = c
-                definitions.append(class_def[2:])
-            elif class_def[2] == self.INHERITS_DEF:
-                parent = self.findClassDef(class_def[3])
-                c = classDef(self, class_def[1], p = parent)
-                self.m_classes.append(c)
-                self.types[class_def[1]] = c
-                definitions.append(class_def[4:])
+            if class_def[0] == self.TEMPLATE_CLASS_DEF:
+                if self.templateDefined(class_def[1]):
+                    self.error(ErrorType.TYPE_ERROR, description=f'Duplicate template name {class_def[1]}')
+                t = templateDef(self, class_def[1], class_def[2], class_def[3:])
+                self.m_templates[class_def[1]] = t             
             else:
-                self.error(ErrorType.SYNTAX_ERROR)
+                if self.classDefined(class_def[1], m_classes):
+                    self.error(ErrorType.TYPE_ERROR, description=f'Duplicate class name {class_def[1]}')
+                if isinstance(class_def[2], list):
+                    c = classDef(self, class_def[1])
+                    m_classes[class_def[1]] = c
+                    self.types[class_def[1]] = c
+                    classdefs[class_def[1]] = class_def[2:]
+                elif class_def[2] == self.INHERITS_DEF:
+                    parent = self.findClassDef(class_def[3])
+                    c = classDef(self, class_def[1], p = parent)
+                    m_classes[class_def[1]] = c
+                    self.types[class_def[1]] = c
+                    classdefs[class_def[1]] = class_def[4:]
+                else:
+                    self.error(ErrorType.SYNTAX_ERROR)
 
-        for i in range(len(self.m_classes)):
-            self.initializeClass(definitions[i], self.m_classes[i])
+        for key in m_classes:
+            self.initializeClass(classdefs[key], m_classes[key])
             
     def initializeClass(self, mf, a):
         for item in mf:
@@ -81,18 +86,19 @@ class Interpreter(InterpreterBase):
                     else:
                         a.m_fields.append(fieldDef(self, item[2], item[1], item[3]))
 
-    def classDefined(self, classname):
-        cnames = [c.className for c in self.m_classes]
-        return classname in cnames
+    def classDefined(self, classname, classes):
+        return classname in classes
+    
+    def templateDefined(self, tempname):
+        return tempname in self.m_templates
     
     def findClassDef(self, classname):
-        for c in self.m_classes:
-            if c.className == classname:
-                return c
-        self.error(ErrorType.TYPE_ERROR, description=f'class {classname} is not defined')
-
-    def mapToDefault(self, type):
-        pass
+        if classname not in self.types:
+            self.error(ErrorType.TYPE_ERROR, description=f'class {classname} is not defined')
+        r = self.types[classname]
+        if not isinstance(r, classDef):
+            self.error(ErrorType.TYPE_ERROR, description=f'invalid class')
+        return r
     
     def stackpush(self, frame):
         self.callstack.append(frame)

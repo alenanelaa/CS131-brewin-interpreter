@@ -8,15 +8,17 @@ class fieldDef:
         self.interpreter, self.m_name = i, n
 
         if t not in self.interpreter.types:
-            self.interpreter.error(ErrorType.TYPE_ERROR)
-
+            if any([c=='@' for c in t]):
+                self.m_type = self.interpreter.m_templates[t.split('@')[0]].returnClassDef(t)
+            else:
+                self.interpreter.error(ErrorType.TYPE_ERROR)
         self.m_type = self.interpreter.types[t]
 
         if not val:
             if isinstance(self.m_type, classDef):
                 self.m_val = value(self.m_type, None)
             else:
-                self.m_val = value.defaults[self.m_type]
+                self.m_val = value(self.m_type,value.defaults[self.m_type])
         else:
             if val == 'null':
                 if isinstance(self.m_type, classDef): #only object variables can be null (no primitives)

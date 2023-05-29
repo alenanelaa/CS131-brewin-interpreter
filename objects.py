@@ -162,7 +162,10 @@ class objDef:
             args = self.__evalparams(expr[3:], env)
             r = self.__handleCall(expr[1], expr[2], env, args)
         elif expr[0] == self.interpreter.NEW_DEF:
-            cdef = self.interpreter.findClassDef(expr[1])
+            if any([c == '@' for c in expr[1]]) and expr[1] not in self.interpreter.types:
+                cdef = self.interpreter.m_templates[expr[1].split('@')[0]].returnClassDef(expr[1])
+            else:
+                cdef = self.interpreter.findClassDef(expr[1])
             obj = self.interpreter.instantiate_object(cdef)
             return value(cdef, obj)
         elif expr[0] in binops:
@@ -299,9 +302,15 @@ class objDef:
             self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {var}')
 
     def __handleLet(self, vars, env):
-        t = [self.interpreter.types[vars[i][0]] for i in range(len(vars))]
+        t = []
+        for i in range(len(vars)):
+            if any([c == '@' for c in vars[i][0]]) and vars[i][0] not in self.interpreter.types:
+                t.append(self.interpreter.m_templates[vars[i][0].split('@')[0]].returnClassDef(vars[i][0]))
+            else:
+                t.append(self.interpreter.types[vars[i][0]])
+
+        # t = [self.interpreter.types[vars[i][0]] for i in range(len(vars))]
         names = [vars[i][1] for i in range(len(vars))]
-        #vals = [self.__evaluate(vars[i][2], env) for i in range(len(vars))]
         d = {} #empty dict to build local variable scope
         for i in range(len(vars)):
             if names[i] in d:
@@ -339,6 +348,73 @@ class objDef:
                 return r
             cond = self.__evaluate(condition, env)
     
+    def __evalparams(self, args, env):
+        if self.interpreter.trace:
+            self.interpreter.output(f'EVALUATING PARAMETERS {args}')
+        return [self.__evaluate(x, env) for x in args]
+
+    def __isfieldname(self, fieldname):
+        fnames = [f.m_name for f in self.m_fields]
+        return fieldname in fnames
+
+    def __typematch(self, var, val):
+        if var == val:
+            return True
+        elif isinstance(var, classDef) and isinstance(val, classDef):
+            return self.__typematch(var, val.parent) #parents and grandparents
+        else:
+            return False
+    
+    def setvar(self, var, dict, value):
+        if dict[var].type == value.type:
+            dict[var] = value
+        elif isinstance(dict[var].type, classDef): 
+            if value.type == types.NULL: #null
+                value.type = dict[var].type
+                dict[var] = value
+            elif isinstance(value.type, classDef):
+                if self.__typematch(dict[var].type, value.type):
+                    dict[var] = value
+                else:
+                    self.interpreter.error(ErrorType.TYPE_ERROR)
+            else:
+                self.interpreter.error(ErrorType.TYPE_ERROR)
+        else:
+            self.interpreter.error(ErrorType.TYPE_ERROR)
+
+    def searchlocals(self, token, localvars):
+
+        for i in range(len(localvars)-1, -1, -1):
+            if token in localvars[i]:
+                return localvars[i][token]
+
+    def __eq__(self, other):
+        return self is other
+    
+    def getParams(self, paramnames, paramvals):
+        if self.interpreter.trace:
+            self.interpreter.output(f"GETTING PARAMETERS {paramnames}")
+        pdict = {paramnames[i][1]:paramvals[i] for i in range(len(paramnames))}
+        return pdict
+        
+    def getMethod(self, mname, params):
+        m = self.m_class.findMethodDef(mname, params)
+        o = self
+
+        if m == -1:
+            if self.parent:
+                return self.parent.getMethod(mname, params)
+            else:
+                self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown method {mname}')
+        else:
+            return m, o
+    
+    def getField(self, fieldname):
+        for f in self.m_fields:
+            if f.m_name == fieldname:
+                return f
+        self.interpreter.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
+
     def __binaryExpression(self, op, arg1, arg2):
         err_msg = f'operator {op} applied to incompatible types'
         match op:
@@ -412,70 +488,3 @@ class objDef:
                 if arg1.type != types.BOOL:
                     self.interpreter.error(ErrorType.TYPE_ERROR)
                 return value(types.BOOL, not arg1)
-    
-    def __evalparams(self, args, env):
-        if self.interpreter.trace:
-            self.interpreter.output(f'EVALUATING PARAMETERS {args}')
-        return [self.__evaluate(x, env) for x in args]
-
-    def __isfieldname(self, fieldname):
-        fnames = [f.m_name for f in self.m_fields]
-        return fieldname in fnames
-
-    def __typematch(self, var, val):
-        if var == val:
-            return True
-        elif isinstance(var, classDef) and isinstance(val, classDef):
-            return self.__typematch(var, val.parent) #parents and grandparents
-        else:
-            return False
-    
-    def setvar(self, var, dict, value):
-        if dict[var].type == value.type:
-            dict[var] = value
-        elif isinstance(dict[var].type, classDef): 
-            if value.type == types.NULL: #null
-                value.type = dict[var].type
-                dict[var] = value
-            elif isinstance(value.type, classDef):
-                if self.__typematch(dict[var].type, value.type):
-                    dict[var] = value
-                else:
-                    self.interpreter.error(ErrorType.TYPE_ERROR)
-            else:
-                self.interpreter.error(ErrorType.TYPE_ERROR)
-        else:
-            self.interpreter.error(ErrorType.TYPE_ERROR)
-
-    def searchlocals(self, token, localvars):
-
-        for i in range(len(localvars)-1, -1, -1):
-            if token in localvars[i]:
-                return localvars[i][token]
-
-    def __eq__(self, other):
-        return self is other
-    
-    def getParams(self, paramnames, paramvals):
-        if self.interpreter.trace:
-            self.interpreter.output(f"GETTING PARAMETERS {paramnames}")
-        pdict = {paramnames[i][1]:paramvals[i] for i in range(len(paramnames))}
-        return pdict
-        
-    def getMethod(self, mname, params):
-        m = self.m_class.findMethodDef(mname, params)
-        o = self
-
-        if m == -1:
-            if self.parent:
-                return self.parent.getMethod(mname, params)
-            else:
-                self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown method {mname}')
-        else:
-            return m, o
-    
-    def getField(self, fieldname):
-        for f in self.m_fields:
-            if f.m_name == fieldname:
-                return f
-        self.interpreter.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
