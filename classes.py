@@ -31,26 +31,29 @@ class classDef:
             return False
 
     def findMethodDef(self, methodname, params):
-        if self.interpreter.trace:
-            self.interpreter.output(f'methods in class {self.className}:')
-            for m in self.m_methods:
-                self.interpreter.output(f'name: {m.m_name}; params: {m.params}; code: {m.m_statement}')
-
         for m in self.m_methods:
             if m.m_name == methodname:
                 t1 = [self.interpreter.types[m.params[i][0]] for i in range(len(m.params))] #parameter types
                 t2 = [v.type for v in params]
 
+                #check for exceptions
+                for i in range(len(params)):
+                    if params[i].type == types.EXCEPTION:
+                        return params[i]
                 if len(t1) != len(t2):
                     return -1
                 if not all([self.typematch(t1[i], t2[i]) for i in range(len(t1))]):
                     return -1
+
                 
                 for i in range(len(t1)):
                     params[i].type = t1[i] #set the types properly
                 
                 return m       
         return -1
+    
+    def __str__(self):
+        return self.className
     
 class templateDef:
     def __init__(self, inter, name, tnames, mf):

@@ -1,5 +1,6 @@
 from intbase import ErrorType
 from classes import classDef
+from methods import methodDef
 from values import types, value, environment
 
 class objDef:
@@ -31,29 +32,27 @@ class objDef:
         env = environment(params)
 
         while stackframe > 0:
+            # if self.interpreter.trace:
+            #     self.interpreter.output(f'CALLSTACK: {self.interpreter.callstack}')
+
             cur_frame = self.interpreter.stackpop()
             stackframe -= 1
-
             if not cur_frame:
                 break
-
             s = cur_frame.pop(0)
-
             self.interpreter.stackpush(cur_frame)
             stackframe += 1
-
             r = self.__run_statement(s, method.default_return, env)
-        
             if r:
                 stackframe -= 1
 
         if not r:
             return method.default_return
         
-        if not method.typematch(method.default_return.type, r.type):
+        if r.type == types.EXCEPTION or method.typematch(method.default_return.type, r.type):
+            return r
+        else:
             self.interpreter.error(ErrorType.TYPE_ERROR)
-        
-        return r
     
     def __run_statement(self, statement, rval, env):
         a = statement[0]
@@ -62,11 +61,11 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output('ENTER BEGIN BLOCK')
 
-                steps = [line for line in statement[1:]]
-                for s in steps:
+                for s in statement[1:]:
                     r = self.__run_statement(s, rval, env)
 
-                    if r: #if statement returns anything besides None, that means it was a return statement
+                    if r: #if statement returns anything besides None, that means it was a return or throw statement
+                        self.interpreter.stackpop()
                         return r
 
             case self.interpreter.CALL_DEF:
@@ -74,7 +73,9 @@ class objDef:
                     self.interpreter.output(f'CALL {statement[2]} in object {statement[1]} with args {statement[3:]}')
 
                 args = self.__evalparams(statement[3:], env)
-                self.__handleCall(statement[1], statement[2], env, args)
+                r = self.__handleCall(statement[1], statement[2], env, args)
+                if isinstance(r, value) and r.type == types.EXCEPTION:
+                    return r
 
             case self.interpreter.IF_DEF:
                 if self.interpreter.trace:
@@ -97,15 +98,12 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'PRINT expressions {statement[1:]}')
                 #list of expression objects to be printed
-                exprs = [e for e in statement[1:]]
-                self.__handlePrint(exprs, env)
+                self.__handlePrint(statement[1:], env)
 
             case self.interpreter.RETURN_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output("RETURN from method called")
-
                 self.interpreter.stackpop()
-
                 if len(statement) == 2:
                     if statement[1] == 'null':
                         if rval.type == types.BOOL or rval.type == types.INT or rval.type == types.STRING or rval.type == types.NOTHING:
@@ -144,6 +142,23 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'WHILE LOOP with condition {statement[1]}')
                 return self.__handleWhile(statement[1], statement[2], env, rval)
+            
+            case self.interpreter.THROW_DEF:
+                if self.interpreter.trace:
+                    self.interpreter.output(f'THROW exception {statement[1]}')
+                self.interpreter.stackpop()
+                return value(types.EXCEPTION, statement[1].strip('"'))
+            
+            case self.interpreter.TRY_DEF:
+                if self.interpreter.trace:
+                    self.interpreter.output(f'TRY statement {statement[1]} with CATCH statement {statement[2]}')
+                r = self.__run_statement(statement[1], rval, env)
+                if r.type == types.EXCEPTION:
+                    env.addexception(r)
+                    r = self.__run_statement(statement[2], rval, env)
+                    env.clearexception()       
+                return r
+            
             case _:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{statement[0]}" ')
     
@@ -187,6 +202,10 @@ class objDef:
             return token
         elif isinstance(token, list):
             val = self.__evaluate(token, env)
+        elif token == 'exception':
+            if not env.exception:
+                self.interpreter.error(ErrorType.NAME_ERROR, description='invalid parameter exception')
+            val = env.exception
         elif token == 'me':
             val = value(self.me.m_class, self.me)
         elif token == 'null':
@@ -211,12 +230,16 @@ class objDef:
         match object:
             case self.interpreter.ME_DEF:
                 m, o = self.me.getMethod(mname, args)
+                if isinstance(m, value): #exception
+                    return m    
                 p = self.getParams(m.params, args)
                 r = o.run_method(m, p)
             case self.interpreter.SUPER_DEF:
                 if not self.parent:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description = f'invalid call to super object by class {self.m_class.className}')
                 m, o = self.parent.getMethod(mname, args)
+                if isinstance(m, value):
+                    return m
                 p = self.getParams(m.params, args)
                 r = o.run_method(m, p)
             case _:
@@ -227,6 +250,8 @@ class objDef:
                     self.interpreter.error(ErrorType.FAULT_ERROR, description=f'invalid object pointer {object}')
                 obj = val.m_value
                 m, o = obj.getMethod(mname, args)
+                if isinstance(m, value):
+                    return m
                 p = self.getParams(m.params, args)
                 r = o.run_method(m,p)
         return r
@@ -293,7 +318,7 @@ class objDef:
                     if self.__typematch(field.type, val.type):
                         field.setvalue(val)
                     else:
-                        self.interpreter.error(ErrorType.TYPE_ERROR)
+                        self.interpreter.error(ErrorType.TYPE_ERROR, description=f'type mismatch {field.type} and {val.type}')
                 else:
                     self.interpreter.error(ErrorType.TYPE_ERROR)
             else:
@@ -401,13 +426,13 @@ class objDef:
         m = self.m_class.findMethodDef(mname, params)
         o = self
 
+        if isinstance(m, value) or isinstance(m, methodDef): #exception thrown
+            return m, o
         if m == -1:
             if self.parent:
                 return self.parent.getMethod(mname, params)
             else:
                 self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown method {mname}')
-        else:
-            return m, o
     
     def getField(self, fieldname):
         for f in self.m_fields:
