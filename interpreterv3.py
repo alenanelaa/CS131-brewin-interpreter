@@ -14,7 +14,6 @@ class Interpreter(InterpreterBase):
         self.callstack = []
         #add class types as needed during initialization
         self.types = {'int':types.INT, 'string':types.STRING, 'null':types.NULL, 'bool':types.BOOL}
-        self.generics = {}
         #for debugging
         self.trace = trace_output
 
@@ -23,9 +22,7 @@ class Interpreter(InterpreterBase):
         indicator, tokens = BParser.parse(program)
 
         if not indicator:
-            self.output("Parsing Error")
-            #FIGURE OUT ANOTHER WAY TO RETURN AN ERROR THIS SEEMS WRONG********
-            return SystemError
+            self.error(ErrorType.SYNTAX_ERROR)
 
         self.trackClasses(tokens)
         mainclass = self.findClassDef('main')

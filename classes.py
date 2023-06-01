@@ -84,6 +84,4 @@ class templateDef:
             for key, val in replace.items():
                 code = code.replace(key, val)
             return code
-        else:
-            return code
     #end of chatGPT code

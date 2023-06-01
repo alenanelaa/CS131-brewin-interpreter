@@ -42,6 +42,7 @@ class objDef:
             r = self.__run_statement(s, method.default_return, env)
 
             if r:
+                self.interpreter.stackpop()
                 stackframe -= 1
 
         if not r:
@@ -96,7 +97,6 @@ class objDef:
             case self.interpreter.RETURN_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output("RETURN from method called")
-                self.interpreter.stackpop()
                 if len(statement) == 2:
                     if statement[1] == 'null':
                         if rval.type == types.BOOL or rval.type == types.INT or rval.type == types.STRING or rval.type == types.NOTHING:
@@ -120,6 +120,8 @@ class objDef:
                     self.interpreter.output(f'LET local variables: {statement[1]}')
                 #returns dictionary of local variables in the let statement (with type checking in the function)
                 vars = self.__handleLet(statement[1], env)
+                if isinstance(vars, value) and vars.type == types.EXCEPTION:
+                    return vars
                 env.addlocal(vars) #pushes scope on stack
                 steps = [line for line in statement[2:]]
                 for s in steps:
@@ -141,7 +143,6 @@ class objDef:
             case self.interpreter.THROW_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'THROW exception {statement[1]}')
-                self.interpreter.stackpop()
                 a = self.__evaluate(statement[1], env)
                 if a.type == types.EXCEPTION:
                     return a
@@ -354,6 +355,8 @@ class objDef:
                     d[names[i]] = value(t[i], value.defaults[t[i]])
             else:
                 val = self.__evaluate(vars[i][2], env)
+                if val.type == types.EXCEPTION:
+                    return val
                 if self.__typematch(t[i], val.type):
                     d[names[i]] = val
                 elif isinstance(t[i], classDef) and val.type == types.NULL:
