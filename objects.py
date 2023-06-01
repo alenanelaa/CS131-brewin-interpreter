@@ -23,11 +23,6 @@ class objDef:
             p = [str(key) + ':' + str(params[key]) for key in params]
             self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {p}')
 
-        # if method.m_statement[0] == self.interpreter.BEGIN_DEF:
-        #     self.interpreter.stackpush(method.m_statement[1:])
-        # else:
-        #     self.interpreter.stackpush([method.m_statement])
-
         self.interpreter.stackpush([method.m_statement])
 
         stackframe = 1
@@ -61,13 +56,9 @@ class objDef:
         a = statement[0]
         match a:
             case self.interpreter.BEGIN_DEF:
-                if self.interpreter.trace:
-                    self.interpreter.output('ENTER BEGIN BLOCK')
-
                 for s in statement[1:]:
                     r = self.__run_statement(s, rval, env)
-
-                    if r: #if statement returns anything besides None, that means it was a return or throw statement
+                    if r:
                         return r
 
             case self.interpreter.CALL_DEF:
@@ -134,7 +125,7 @@ class objDef:
                 for s in steps:
                     r = self.__run_statement(s, rval, env)
 
-                    if r: #if statement returns anything besides None, that means it was a return statement
+                    if r: #if statement returns anything besides None, that means it was a return statement or exception
                         if self.interpreter.trace:
                             self.interpreter.output(f'EXIT LET scope {statement[1]}')
                         break
@@ -267,6 +258,8 @@ class objDef:
 
     def __handleIf(self, st, env, rval):
         cond = self.__evaluate(st[0], env)
+        if cond.type == types.EXCEPTION:
+            return cond
         if cond.type != types.BOOL:
             self.interpreter.error(ErrorType.TYPE_ERROR, description=f'Non-boolean if condition')
         if self.interpreter.trace:
@@ -373,7 +366,6 @@ class objDef:
         return d
     
     def __handleWhile(self, condition, st, env, rval):
-
         cond = self.__evaluate(condition, env)
         if cond.type == types.EXCEPTION:
             return cond
