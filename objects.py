@@ -23,10 +23,12 @@ class objDef:
             p = [str(key) + ':' + str(params[key]) for key in params]
             self.interpreter.output(f'RUN {method.m_name} method: {method.m_statement} with params {p}')
 
-        if method.m_statement[0] == self.interpreter.BEGIN_DEF:
-            self.interpreter.stackpush(method.m_statement[1:])
-        else:
-            self.interpreter.stackpush([method.m_statement])
+        # if method.m_statement[0] == self.interpreter.BEGIN_DEF:
+        #     self.interpreter.stackpush(method.m_statement[1:])
+        # else:
+        #     self.interpreter.stackpush([method.m_statement])
+
+        self.interpreter.stackpush([method.m_statement])
 
         stackframe = 1
         env = environment(params)
@@ -43,6 +45,7 @@ class objDef:
             self.interpreter.stackpush(cur_frame)
             stackframe += 1
             r = self.__run_statement(s, method.default_return, env)
+
             if r:
                 stackframe -= 1
 
@@ -65,7 +68,6 @@ class objDef:
                     r = self.__run_statement(s, rval, env)
 
                     if r: #if statement returns anything besides None, that means it was a return or throw statement
-                        self.interpreter.stackpop()
                         return r
 
             case self.interpreter.CALL_DEF:
@@ -118,7 +120,9 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'SET variable {statement[1]} to {statement[2]}')
 
-                self.__handleSet(statement[1], statement[2], env)
+                r = self.__handleSet(statement[1], statement[2], env)
+                if r: #r will always be None unless an exception is thrown
+                    return r
 
             case self.interpreter.LET_DEF:
                 if self.interpreter.trace:
@@ -148,6 +152,8 @@ class objDef:
                     self.interpreter.output(f'THROW exception {statement[1]}')
                 self.interpreter.stackpop()
                 a = self.__evaluate(statement[1], env)
+                if a.type == types.EXCEPTION:
+                    return a
                 if a.type != types.STRING:
                     self.interpreter.error(ErrorType.TYPE_ERROR, description=f'thrown exception must be of type string')
                 return value(types.EXCEPTION, a.m_value)
@@ -297,6 +303,8 @@ class objDef:
     
     def __handleSet(self, var, value, env):
         val = self.__evaluate(value, env)
+        if val.type == types.EXCEPTION:
+            return val
         fieldnames = [f.m_name for f in self.m_fields]
 
         if any([var in env.locals[i] for i in range(len(env.locals))]):
@@ -332,8 +340,11 @@ class objDef:
     def __handleLet(self, vars, env):
         t = []
         for i in range(len(vars)):
-            if any([c == '@' for c in vars[i][0]]) and vars[i][0] not in self.interpreter.types:
-                t.append(self.interpreter.m_templates[vars[i][0].split('@')[0]].returnClassDef(vars[i][0]))
+            if vars[i][0] not in self.interpreter.types:
+                if any([c == '@' for c in vars[i][0]]):
+                    t.append(self.interpreter.m_templates[vars[i][0].split('@')[0]].returnClassDef(vars[i][0]))
+                else:
+                    self.interpreter.error(ErrorType.TYPE_ERROR)
             else:
                 t.append(self.interpreter.types[vars[i][0]])
 
@@ -364,6 +375,8 @@ class objDef:
     def __handleWhile(self, condition, st, env, rval):
 
         cond = self.__evaluate(condition, env)
+        if cond.type == types.EXCEPTION:
+            return cond
         if cond.type != types.BOOL:
             self.interpreter.error(ErrorType.TYPE_ERROR, description=f'Non-boolean while condition')
 
