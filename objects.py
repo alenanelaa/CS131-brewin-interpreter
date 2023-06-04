@@ -297,7 +297,7 @@ class objDef:
     
     def __handleSet(self, var, value, env):
         val = self.__evaluate(value, env)
-        if val.type == types.EXCEPTION:
+        if val.type == types.EXCEPTION and value != 'exception':
             return val
         fieldnames = [f.m_name for f in self.m_fields]
 
@@ -313,7 +313,7 @@ class objDef:
             self.setvar(var, env.params, val)
         elif var in fieldnames:
             field = self.getField(var)
-            if field.type == val.type:
+            if self.__typematch(field.type, val.type):
                 field.setvalue(val)
             elif isinstance(field.type, classDef):
                 if val.type == types.NULL: #null
@@ -395,6 +395,8 @@ class objDef:
 
     def __typematch(self, var, val):
         if var == val:
+            return True
+        elif (var == types.STRING and val == types.EXCEPTION):
             return True
         elif isinstance(var, classDef) and isinstance(val, classDef):
             return self.__typematch(var, val.parent) #parents and grandparents
