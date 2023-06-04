@@ -53,12 +53,12 @@ class objDef:
         else:
             self.interpreter.error(ErrorType.TYPE_ERROR)
     
-    def __run_statement(self, statement, rval, env):
+    def __run_statement(self, statement, rval, env, excep = None):
         a = statement[0]
         match a:
             case self.interpreter.BEGIN_DEF:
                 for s in statement[1:]:
-                    r = self.__run_statement(s, rval, env)
+                    r = self.__run_statement(s, rval, env, excep)
                     if r:
                         return r
 
@@ -66,24 +66,24 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'CALL {statement[2]} in object {statement[1]} with args {statement[3:]}')
 
-                args = self.__evalparams(statement[3:], env)
-                r = self.__handleCall(statement[1], statement[2], env, args)
+                args = self.__evalparams(statement[3:], env, excep)
+                r = self.__handleCall(statement[1], statement[2], env, args, excep)
                 if isinstance(r, value) and r.type == types.EXCEPTION:
                     return r
 
             case self.interpreter.IF_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'IF STATEMENT with condition {statement[1]}')
-                return self.__handleIf(statement[1:], env, rval)
+                return self.__handleIf(statement[1:], env, rval, excep)
 
             case self.interpreter.INPUT_INT_DEF:
-                v = self.__evaluate(statement[1], env)
+                v = self.__evaluate(statement[1], env, excep)
                 if v.type != types.INT:
                     self.interpreter.output(ErrorType.TYPE_ERROR)
                 self.__handleInput(statement[1], types.INT, v, env)
 
             case self.interpreter.INPUT_STRING_DEF:
-                v = self.__evaluate(statement[1], env)
+                v = self.__evaluate(statement[1], env, excep)
                 if v.type != types.STRING:
                     self.interpreter.output(ErrorType.TYPE_ERROR)
                 self.__handleInput(statement[1], types.STRING, v, env)
@@ -92,7 +92,8 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'PRINT expressions {statement[1:]}')
                 #list of expression objects to be printed
-                self.__handlePrint(statement[1:], env)
+                return self.__handlePrint(statement[1:], env, excep)
+
 
             case self.interpreter.RETURN_DEF:
                 if self.interpreter.trace:
@@ -103,7 +104,7 @@ class objDef:
                             self.interpreter.error(ErrorType.TYPE_ERROR)
                         else:
                             return value(rval.type, None)
-                    return self.__evaluate(statement[1], env)
+                    return self.__evaluate(statement[1], env, excep)
                 else:
                     return rval
 
@@ -111,7 +112,7 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'SET variable {statement[1]} to {statement[2]}')
 
-                r = self.__handleSet(statement[1], statement[2], env)
+                r = self.__handleSet(statement[1], statement[2], env, excep)
                 if r: #r will always be None unless an exception is thrown
                     return r
 
@@ -119,14 +120,12 @@ class objDef:
                 if self.interpreter.trace:
                     self.interpreter.output(f'LET local variables: {statement[1]}')
                 #returns dictionary of local variables in the let statement (with type checking in the function)
-                vars = self.__handleLet(statement[1], env)
+                vars = self.__handleLet(statement[1], env, excep)
                 if isinstance(vars, value) and vars.type == types.EXCEPTION:
                     return vars
                 env.addlocal(vars) #pushes scope on stack
-                steps = [line for line in statement[2:]]
-                for s in steps:
-                    r = self.__run_statement(s, rval, env)
-
+                for line in statement[2:]:
+                    r = self.__run_statement(line, rval, env, excep)
                     if r: #if statement returns anything besides None, that means it was a return statement or exception
                         if self.interpreter.trace:
                             self.interpreter.output(f'EXIT LET scope {statement[1]}')
@@ -138,12 +137,12 @@ class objDef:
             case self.interpreter.WHILE_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'WHILE LOOP with condition {statement[1]}')
-                return self.__handleWhile(statement[1], statement[2], env, rval)
+                return self.__handleWhile(statement[1], statement[2], env, rval, excep)
             
             case self.interpreter.THROW_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'THROW exception {statement[1]}')
-                a = self.__evaluate(statement[1], env)
+                a = self.__evaluate(statement[1], env, excep)
                 if a.type == types.EXCEPTION:
                     return a
                 if a.type != types.STRING:
@@ -153,17 +152,17 @@ class objDef:
             case self.interpreter.TRY_DEF:
                 if self.interpreter.trace:
                     self.interpreter.output(f'TRY statement {statement[1]} with CATCH statement {statement[2]}')
-                r = self.__run_statement(statement[1], rval, env)
-                if r.type == types.EXCEPTION:
-                    env.addexception(r)
-                    r = self.__run_statement(statement[2], rval, env)
-                    env.clearexception()       
+                r = self.__run_statement(statement[1], rval, env, excep)
+                if r and r.type == types.EXCEPTION:
+                    #env.addexception(r)
+                    r = self.__run_statement(statement[2], rval, env, excep = r)
+                    #env.clearexception()       
                 return r
             
             case _:
                 self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'Invalid statement command "{statement[0]}" ')
     
-    def __evaluate(self, expr, env):
+    def __evaluate(self, expr, env, excep):
         binops = {'+', '-', '*', '/', '%', '<', '>', '<=', '>=', '==', '!=', '&', '|'}
         unops = {'!'}
 
@@ -171,12 +170,12 @@ class objDef:
             self.interpreter.output(f'EVALUATE expression {expr}')
         #constant or variable
         if isinstance(expr, str):
-            r =  self.__getValue(expr, env)
+            r =  self.__getValue(expr, env, excep)
         elif expr[0] == self.interpreter.CALL_DEF:
             if self.interpreter.trace:
                     self.interpreter.output(f'CALL {expr[2]} in object {expr[1]} with args {expr[3:]}')
-            args = self.__evalparams(expr[3:], env)
-            r = self.__handleCall(expr[1], expr[2], env, args)
+            args = self.__evalparams(expr[3:], env, excep)
+            r = self.__handleCall(expr[1], expr[2], env, args, excep)
         elif expr[0] == self.interpreter.NEW_DEF:
             if any([c == '@' for c in expr[1]]) and expr[1] not in self.interpreter.types:
                 cdef = self.interpreter.m_templates[expr[1].split('@')[0]].returnClassDef(expr[1])
@@ -185,49 +184,48 @@ class objDef:
             obj = self.interpreter.instantiate_object(cdef)
             return value(cdef, obj)
         elif expr[0] in binops:
-            a1 = self.__getValue(expr[1], env)
-            a2 = self.__getValue(expr[2], env)
+            a1 = self.__getValue(expr[1], env, excep)
+            a2 = self.__getValue(expr[2], env, excep)
             r =  self.__binaryExpression(expr[0], a1, a2)
         elif expr[0] in unops:
-            arg = self.__getValue(expr[1], env)
+            arg = self.__getValue(expr[1], env, excep)
             r =  self.__unaryExpression(expr[0], arg)
         else:
             self.interpreter.error(ErrorType.NAME_ERROR)
         return r
 
-    def __getValue(self, token, env):
+    def __getValue(self, token, env, excep):
         if isinstance(token, str):
             local = self.searchlocals(token, env.locals)
         #edge case for params because they are already mapped to values
         if isinstance(token, value):
             return token
         elif isinstance(token, list):
-            val = self.__evaluate(token, env)
+            return self.__evaluate(token, env, excep)
         elif token == 'exception':
-            if not env.exception:
+            if not excep:
                 self.interpreter.error(ErrorType.NAME_ERROR, description='invalid parameter exception')
-            val = env.exception
+            return excep
         elif token == 'me':
-            val = value(self.me.m_class, self.me)
+            return value(self.me.m_class, self.me)
         elif token == 'null':
-            val = value(types.NULL, None)
+            return value(types.NULL, None)
         elif token == 'true' or token == 'false':
-            val = value(types.BOOL, (token == 'true'))
+            return value(types.BOOL, (token == 'true'))
         elif token[0] == '"' and token[-1] == '"':
-            val = value(types.STRING, token.strip('"'))
+            return value(types.STRING, token.strip('"'))
         elif local: #return local variable value if it exists
             return local
         elif token in env.params: #checks param names first in case there is shadowing of field names
-            val = env.params[token]
+            return env.params[token]
         elif self.__isfieldname(token):
-            val = self.getField(token).getvalue()
+            return self.getField(token).getvalue()
         elif all(c.isdigit() for c in token) or (token[0] == '-' and all(c.isdigit() for c in token[1:])):
-            val = value(types.INT, int(token))
+            return value(types.INT, int(token))
         else:
             self.interpreter.error(ErrorType.NAME_ERROR)
-        return val
 
-    def __handleCall(self, object, mname, env, args):
+    def __handleCall(self, object, mname, env, args, excep):
         match object:
             case self.interpreter.ME_DEF:
                 m, o = self.me.getMethod(mname, args)
@@ -244,7 +242,7 @@ class objDef:
                 p = self.getParams(m.params, args)
                 r = o.run_method(m, p)
             case _:
-                val = self.__evaluate(object, env)
+                val = self.__evaluate(object, env, excep)
                 if not val.m_value:
                     self.interpreter.error(ErrorType.FAULT_ERROR, description='null dereference')
                 elif not isinstance(val.type, classDef):
@@ -257,8 +255,8 @@ class objDef:
                 r = o.run_method(m,p)
         return r
 
-    def __handleIf(self, st, env, rval):
-        cond = self.__evaluate(st[0], env)
+    def __handleIf(self, st, env, rval, excep):
+        cond = self.__evaluate(st[0], env, excep)
         if cond.type == types.EXCEPTION:
             return cond
         if cond.type != types.BOOL:
@@ -266,9 +264,9 @@ class objDef:
         if self.interpreter.trace:
             self.interpreter.output(f'condition {st[0]} evaluated to {cond}')
         if cond.m_value:
-            return self.__run_statement(st[1], rval, env)
+            return self.__run_statement(st[1], rval, env, excep)
         elif len(st[1:]) == 2:
-            return self.__run_statement(st[2], rval, env)
+            return self.__run_statement(st[2], rval, env, excep)
 
     def __handleInput(self, var, type, val, env):
 
@@ -288,15 +286,17 @@ class objDef:
                 val = int(val)
             f.setvalue(value(type, val))
         
-    def __handlePrint(self, s, env):
+    def __handlePrint(self, s, env, excep):
         fprint = ''
         for item in s:
-            val = self.__evaluate(item, env)
+            val = self.__evaluate(item, env, excep)
+            if val.type == types.EXCEPTION and item != 'exception':
+                return val
             fprint = fprint + str(val)
         self.interpreter.output(fprint)
     
-    def __handleSet(self, var, value, env):
-        val = self.__evaluate(value, env)
+    def __handleSet(self, var, value, env, excep):
+        val = self.__evaluate(value, env, excep)
         if val.type == types.EXCEPTION and value != 'exception':
             return val
         fieldnames = [f.m_name for f in self.m_fields]
@@ -331,7 +331,7 @@ class objDef:
         else:
             self.interpreter.error(ErrorType.NAME_ERROR, description=f'unknown variable {var}')
 
-    def __handleLet(self, vars, env):
+    def __handleLet(self, vars, env, excep):
         t = []
         for i in range(len(vars)):
             if vars[i][0] not in self.interpreter.types:
@@ -354,7 +354,7 @@ class objDef:
                 else:
                     d[names[i]] = value(t[i], value.defaults[t[i]])
             else:
-                val = self.__evaluate(vars[i][2], env)
+                val = self.__evaluate(vars[i][2], env, excep)
                 if val.type == types.EXCEPTION:
                     return val
                 if self.__typematch(t[i], val.type):
@@ -368,8 +368,8 @@ class objDef:
             self.interpreter.output(f'local variable scope with vars: {[names[i] +":"+ str(d[names[i]]) for i in range(len(vars))]}')
         return d
     
-    def __handleWhile(self, condition, st, env, rval):
-        cond = self.__evaluate(condition, env)
+    def __handleWhile(self, condition, st, env, rval, excep):
+        cond = self.__evaluate(condition, env, excep)
         if cond.type == types.EXCEPTION:
             return cond
         if cond.type != types.BOOL:
@@ -378,16 +378,16 @@ class objDef:
         while cond.m_value:
             if self.interpreter.trace:
                 self.interpreter.output(f'condition {condition} evaluated to {cond}')
-            r = self.__run_statement(st, rval, env)
+            r = self.__run_statement(st, rval, env, excep)
             #break out of while loop
             if r:
                 return r
-            cond = self.__evaluate(condition, env)
+            cond = self.__evaluate(condition, env, excep)
     
-    def __evalparams(self, args, env):
+    def __evalparams(self, args, env, excep):
         if self.interpreter.trace:
             self.interpreter.output(f'EVALUATING PARAMETERS {args}')
-        return [self.__evaluate(x, env) for x in args]
+        return [self.__evaluate(x, env, excep) for x in args]
 
     def __isfieldname(self, fieldname):
         fnames = [f.m_name for f in self.m_fields]
@@ -454,6 +454,11 @@ class objDef:
         self.interpreter.error(ErrorType.NAME_ERROR, description=f'field {fieldname} is not defined')
 
     def __binaryExpression(self, op, arg1, arg2):
+        if arg1.type == types.EXCEPTION:
+            return arg1
+        elif arg2.type == types.EXCEPTION:
+            return arg2
+
         err_msg = f'operator {op} applied to incompatible types'
         match op:
             #arithmetic operators
@@ -521,8 +526,12 @@ class objDef:
                 return value(types.BOOL, arg1.m_value or arg2.m_value)
     
     def __unaryExpression(self, op, arg1):
+        if arg1.type == types.EXCEPTION:
+            return arg1
         match op:
             case '!':
                 if arg1.type != types.BOOL:
                     self.interpreter.error(ErrorType.TYPE_ERROR)
                 return value(types.BOOL, not arg1)
+            case _:
+                self.interpreter.error(ErrorType.SYNTAX_ERROR, description=f'invalid operator {op}')

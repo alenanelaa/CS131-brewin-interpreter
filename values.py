@@ -12,13 +12,8 @@ class environment:
     def __init__(self, p):
         self.params = p
         self.locals = []
-        self.exception = None
     def addlocal(self, scope):
         self.locals.append(scope)
-    def addexception(self, ex):
-        self.exception = ex
-    def clearexception(self):
-        self.exception = None
 
 #class for brewin values, keeps track of type and value
 class value:
