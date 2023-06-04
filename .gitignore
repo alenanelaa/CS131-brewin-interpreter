@@ -135,7 +135,3 @@ dmypy.json
 v2
 v3
 results.json
-tracing.py
-notracing.py
-tester.py
-harness.py
