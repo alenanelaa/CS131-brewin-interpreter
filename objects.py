@@ -205,7 +205,7 @@ class objDef:
         elif token == 'exception':
             if not excep:
                 self.interpreter.error(ErrorType.NAME_ERROR, description='invalid parameter exception')
-            return excep
+            return value(types.STRING, excep.m_value)
         elif token == 'me':
             return value(self.me.m_class, self.me)
         elif token == 'null':
